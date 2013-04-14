@@ -1,0 +1,16 @@
+{% extends "bootstrap_responsive.html" %}
+
+{% block head %}
+{{ super() }}
+<!-- Put custom CSS/JS here -->
+{% endblock %}
+
+{% block body_content %}
+<!-- Build a custom look here that all pages can inherit. -->
+<div class="row">
+  <div class="span6 offset3">
+    {% block content %}
+    {% endblock %}
+  </div>
+</div>
+{% endblock %}

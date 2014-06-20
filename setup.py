@@ -16,4 +16,9 @@ setup(
   author_email='sholsapp@gmail.com',
   url='http://www.flask.com',
   packages=['flaskheroku'],
+  install_requires=[
+    'Flask',
+    'Flask-Bootstrap',
+    'Flask-SQLAlchemy',
+  ],
 )

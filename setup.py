@@ -17,6 +17,8 @@ setup(
   url='http://www.flask.com',
   packages=['flaskheroku'],
   install_requires=[
+    'configobj',
+    'validate',
     'Flask',
     'Flask-Bootstrap',
     'Flask-Script',

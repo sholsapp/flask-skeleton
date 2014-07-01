@@ -19,6 +19,7 @@ setup(
   install_requires=[
     'Flask',
     'Flask-Bootstrap',
+    'Flask-Script',
     'Flask-SQLAlchemy',
     'Flask-Restless',
   ],

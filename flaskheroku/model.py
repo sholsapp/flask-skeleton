@@ -6,8 +6,9 @@ db = SQLAlchemy()
 
 
 class Messages(db.Model):
-  id = Column(Integer, primary_key=True)
-  message = Column(String(80))
+  __tablename__ = 'messages'
+  id = db.Column(db.Integer, primary_key=True)
+  message = db.Column(db.String(80))
   def __repr__(self):
     return 'Messages(%r)' % repr(self.message)
   def __init__(self, message):
@@ -16,4 +17,4 @@ class Messages(db.Model):
 
 def make_conn_str():
   """Make an in memory database for now."""
-  return 'sqlite://'
+  return 'sqlite:///flaskheroku.db'

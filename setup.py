@@ -20,5 +20,6 @@ setup(
     'Flask',
     'Flask-Bootstrap',
     'Flask-SQLAlchemy',
+    'Flask-Restless',
   ],
 )

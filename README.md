@@ -1,9 +1,7 @@
 # flask-heroku
 
 A "hello world" style Flask web server application that (optionally) runs on
-Heroku.
-
-Some notable parts used in this web application are:
+Heroku. Some notable parts used in this web application are:
 
   1. [Flask](http://flask.pocoo.org/)
   2. [Gunicorn](http://gunicorn.org/)

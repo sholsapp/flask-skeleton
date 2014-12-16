@@ -1,9 +1,15 @@
+import logging
+
 from flask import Flask, render_template, jsonify
 from flask.ext.bootstrap import Bootstrap
 from flask.ext.restless import APIManager
 
 from flaskheroku.api import api
 from flaskheroku.model import make_conn_str, db, Messages
+
+
+logging.basicConfig(level=logging.DEBUG)
+log = logging.getLogger(__name__)
 
 
 # Initialize Flask and register a blueprint
@@ -33,6 +39,7 @@ def init_webapp():
 
 @app.route('/')
 def index():
+  log.debug('Someone accessed index.html!')
   return render_template('index.html')
 
 

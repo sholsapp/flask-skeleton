@@ -5,12 +5,12 @@ Heroku.
 
 Some notable parts used in this web application are:
 
-  1. Flask
-  2. Gunicorn
-  3. Flask-Restless
-  4. Flask-SQLAlchemy
-  5. Flask-Bootstrap
-  6. Flask-Manager
+  1. [Flask](http://flask.pocoo.org/)
+  2. [Gunicorn](http://gunicorn.org/)
+  3. [Flask-Restless](https://flask-restless.readthedocs.org/en/latest/)
+  4. [Flask-SQLAlchemy](https://pythonhosted.org/Flask-SQLAlchemy/)
+  5. [Flask-Bootstrap](http://pythonhosted.org/Flask-Bootstrap/)
+  6. [Flask-Script](http://flask-script.readthedocs.org/en/latest/)
 
 ## development
 

@@ -35,7 +35,7 @@ Start the web server on your local machine using Flask-Manager.
 Then, in your browser, navigate to http://127.0.0.1:5000/. You should see
 something like the following image.
 
-![The flask-heroku application running in a web browser.](data/flask-heroku.jpg)
+![The flask-heroku application running in a web browser.](https://github.com/sholsapp/flask-heroku/blob/master/data/flask-heroku.png)
 
 ## heroku
 

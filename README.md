@@ -12,6 +12,10 @@ Heroku. Some notable parts used in this web application are:
 
 ## development
 
+Before you get started you'll need to have Python 2.6+ installed. After, you'll
+need to also instal virtualenv. Research how to do this for whatever platform
+you run before continuing.
+
 ### setup a virtualenv
 
 Create a virtual environment the web application by running the following

@@ -1,4 +1,4 @@
-# flask-heroku
+# flask-skeleton
 
 A "hello world" style Flask web server application that (optionally) runs on
 Heroku. Some notable parts used in this web application are:

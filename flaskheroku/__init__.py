@@ -6,6 +6,7 @@ from flaskheroku.api import api
 from flaskheroku.model import make_conn_str, db, Messages
 
 
+# Initialize Flask and register a blueprint
 app = Flask(__name__)
 # Note, this url namespace also exists for the Flask-Restless
 # extension and is where CRUD interfaces live, so be careful not to
@@ -13,14 +14,16 @@ app = Flask(__name__)
 # to have API live in the same url namespace.
 app.register_blueprint(api, url_prefix='/api')
 
+# Initialize Flask-Restless
 manager = APIManager(app, flask_sqlalchemy_db=db)
 manager.create_api(Messages, methods=['GET', 'POST'])
 
-
+# Initialize Flask-Bootstrap
 Bootstrap(app)
 
 
 def init_webapp():
+  """Initialize the web application."""
   app.config['SQLALCHEMY_DATABASE_URI'] = make_conn_str()
   db.app = app
   db.init_app(app)

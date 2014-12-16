@@ -6,6 +6,7 @@ db = SQLAlchemy()
 
 
 class Messages(db.Model):
+  """A database table for messages."""
   __tablename__ = 'messages'
   id = db.Column(db.Integer, primary_key=True)
   message = db.Column(db.String(80))
@@ -16,5 +17,5 @@ class Messages(db.Model):
 
 
 def make_conn_str():
-  """Make an in memory database for now."""
+  """Make an local database file on disk."""
   return 'sqlite:///flaskheroku.db'

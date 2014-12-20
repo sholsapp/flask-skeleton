@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-from flaskheroku import init_webapp
-from flaskheroku.model import db, Messages
+from flaskskeleton import init_webapp
+from flaskskeleton.model import db, Messages
 
 
 def main():

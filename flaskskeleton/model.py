@@ -18,4 +18,4 @@ class Messages(db.Model):
 
 def make_conn_str():
   """Make an local database file on disk."""
-  return 'sqlite:///flaskheroku.db'
+  return 'sqlite:///flaskskeleton.db'

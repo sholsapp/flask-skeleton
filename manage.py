@@ -4,7 +4,7 @@ from configobj import ConfigObj
 from validate import Validator
 from flask.ext.script import Manager
 
-from flaskheroku import app, init_webapp
+from flaskskeleton import app, init_webapp
 
 
 manager = Manager(app)

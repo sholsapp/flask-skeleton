@@ -4,8 +4,8 @@ from flask import Flask, render_template, jsonify
 from flask.ext.bootstrap import Bootstrap
 from flask.ext.restless import APIManager
 
-from flaskheroku.api import api
-from flaskheroku.model import make_conn_str, db, Messages
+from flaskskeleton.api import api
+from flaskskeleton.model import make_conn_str, db, Messages
 
 
 logging.basicConfig(level=logging.DEBUG)

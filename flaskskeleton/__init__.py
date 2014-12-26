@@ -40,7 +40,7 @@ def init_webapp():
 @app.route('/')
 def index():
   log.debug('Someone accessed index.html!')
-  return render_template('index.html')
+  return render_template('index.html', messages=Messages.query.all())
 
 
 @app.route('/json')

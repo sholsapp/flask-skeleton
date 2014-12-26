@@ -9,4 +9,22 @@
 <h1>
 Hello, world!
 </h1>
+
+<b>I was rendered using Jinja2 templates!</b>
+
+<table class="table">
+<tr>
+  <th>index</th>
+  <th>message</th>
+</tr>
+<tbody>
+{% for m in messages %}
+  <tr>
+    <td>{{ m.id }}</td>
+    <td><pre>{{ m.message }}</pre></td>
+  </tr>
+{% endfor %}
+</tbody>
+</table>
+
 {% endblock %}

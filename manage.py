@@ -5,9 +5,20 @@ from validate import Validator
 from flask.ext.script import Manager
 
 from flaskskeleton import app, init_webapp
+from flaskskeleton.model import db, Messages
 
 
 manager = Manager(app)
+
+
+@manager.command
+def prime_database():
+  """Prime database with some fake data."""
+  init_webapp()
+  for message in ['a', 'b', 'c', 'd', 'e']:
+    m = Messages(message * 64)
+    db.session.add(m)
+    db.session.commit()
 
 
 @manager.command

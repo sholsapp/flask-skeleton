@@ -1,0 +1,15 @@
+configobj==5.0.6
+Flask==0.10.1
+Flask-Bootstrap==3.3.5.2
+Flask-Restless==0.17.0
+Flask-Script==2.0.5
+Flask-SQLAlchemy==2.0
+itsdangerous==0.24
+Jinja2==2.7.3
+MarkupSafe==0.23
+mimerender==0.5.5
+python-dateutil==2.4.2
+python-mimeparse==0.1.4
+six==1.9.0
+SQLAlchemy==1.0.6
+Werkzeug==0.10.4

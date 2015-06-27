@@ -22,7 +22,6 @@ app.register_blueprint(api, url_prefix='/api')
 
 # Initialize Flask-Restless
 manager = APIManager(app, flask_sqlalchemy_db=db)
-manager.create_api(Messages, methods=['GET', 'POST'])
 
 # Initialize Flask-Bootstrap
 Bootstrap(app)
@@ -34,6 +33,7 @@ def init_webapp():
   db.app = app
   db.init_app(app)
   db.create_all()
+  manager.create_api(Messages, methods=['GET', 'POST'])
   return app
 
 

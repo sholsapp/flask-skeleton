@@ -24,11 +24,21 @@ commands in a terminal.
 ```bash
 virtualenv my-venv
 source my-venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt
 python setup.py develop
 ```
+
 ### start the web server
 
-Start the web server on your local machine using Flask-Manager.
+Before you start the web server you should prime the database with a few sample
+entries.
+
+```bash
+./manage.py prime_database
+```
+
+Then, start the web server on your local machine using Flask-Manager.
 
 ```bash
 ./manage.py runserver

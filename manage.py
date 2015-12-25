@@ -6,7 +6,7 @@ from flask.ext.script import Manager
 import logging
 
 from flaskskeleton import app, init_webapp
-from flaskskeleton.model import db, Messages
+from flaskskeleton.model import db, Employee
 from flaskskeleton.worker import BackgroundWorker
 
 
@@ -35,10 +35,9 @@ def start_background_worker():
 def prime_database():
   """Prime database with some fake data."""
   init_webapp()
-  for message in ['a', 'b', 'c', 'd', 'e']:
-    m = Messages(message * 64)
-    db.session.add(m)
-    db.session.commit()
+  db.session.add(Employee('Bob', 'Smith', 'Software Engineer', 50000))
+  db.session.add(Employee('Alice', 'Johnson', 'Software Engineer', 50000))
+  db.session.commit()
 
 
 @manager.command

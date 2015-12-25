@@ -18,10 +18,13 @@ Hello, world!
   <th>message</th>
 </tr>
 <tbody>
-{% for m in messages %}
+{% for e in employees %}
   <tr>
-    <td>{{ m.id }}</td>
-    <td>{{ m.message }}</td>
+    <td>{{ e.id }}</td>
+    <td>{{ e.first }}</td>
+    <td>{{ e.last }}</td>
+    <td>{{ e.position }}</td>
+    <td>{{ e.salary }}</td>
   </tr>
 {% endfor %}
 </tbody>

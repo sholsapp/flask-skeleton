@@ -5,7 +5,7 @@ from flask.ext.bootstrap import Bootstrap
 from flask.ext.restless import APIManager
 
 from flaskskeleton.api import api
-from flaskskeleton.model import make_conn_str, db, Messages
+from flaskskeleton.model import make_conn_str, db, Employee
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -33,14 +33,14 @@ def init_webapp():
   db.app = app
   db.init_app(app)
   db.create_all()
-  manager.create_api(Messages, methods=['GET', 'POST'])
+  manager.create_api(Employee, methods=['GET', 'POST'])
   return app
 
 
 @app.route('/')
 def index():
   log.debug('Someone accessed index.html!')
-  return render_template('index.html', messages=Messages.query.all())
+  return render_template('index.html', employees=Employee.query.all())
 
 
 @app.route('/json')

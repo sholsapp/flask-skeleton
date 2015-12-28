@@ -35,8 +35,15 @@ def start_background_worker():
 def prime_database():
   """Prime database with some fake data."""
   init_webapp()
-  db.session.add(Employee('Bob', 'Smith', 'Software Engineer', 50000))
-  db.session.add(Employee('Alice', 'Johnson', 'Software Engineer', 50000))
+  employees = [
+    Employee('Bill', 'Lumbergh', 'Boss', '100000'),
+    Employee('Peter', 'Gibbons', 'Employee', '50000'),
+    Employee('Michael', 'Bolton', 'Employee', '50000'),
+    Employee('Samir', 'Nagheenanajar', 'Employee', '50000'),
+    Employee('Milton', 'Waddams', 'Employee', '0'),
+  ]
+  for e in employees:
+    db.session.add(e)
   db.session.commit()
 
 

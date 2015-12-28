@@ -2,6 +2,7 @@ import logging
 
 from flask import Flask, render_template, jsonify
 from flask.ext.bootstrap import Bootstrap
+from flask.ext.cors import CORS
 from flask.ext.restless import APIManager
 
 from flaskskeleton.api import api
@@ -14,6 +15,8 @@ log = logging.getLogger(__name__)
 
 # Initialize Flask and register a blueprint
 app = Flask(__name__)
+CORS(app)
+
 # Note, this url namespace also exists for the Flask-Restless
 # extension and is where CRUD interfaces live, so be careful not to
 # collide with model names here. We could change this, but it's nice
@@ -33,7 +36,7 @@ def init_webapp():
   db.app = app
   db.init_app(app)
   db.create_all()
-  manager.create_api(Employee, methods=['GET', 'POST'])
+  manager.create_api(Employee, methods=['GET', 'POST', 'OPTIONS'])
   return app
 
 

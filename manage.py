@@ -6,7 +6,7 @@ from flask.ext.script import Manager
 import logging
 
 from flaskskeleton import app, init_webapp
-from flaskskeleton.model import db, Employee
+from flaskskeleton.model import db, Employee, User
 from flaskskeleton.worker import BackgroundWorker
 
 
@@ -35,6 +35,13 @@ def start_background_worker():
 def prime_database():
   """Prime database with some fake data."""
   init_webapp()
+  users = [
+    User('sholsapp', 'password', 'sholsapp@gmail.com'),
+  ]
+  for u in users:
+    db.session.add(u)
+  db.session.commit()
+
   employees = [
     Employee('Bill', 'Lumbergh', 'Boss', '100000'),
     Employee('Peter', 'Gibbons', 'Employee', '50000'),

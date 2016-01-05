@@ -23,13 +23,11 @@ class User(db.Model):
   username = db.Column(db.String(8), unique=True, index=True)
   password = db.Column(db.String(128))
   email = db.Column(db.String(128), unique=True, index=True)
-  api_key = db.Column(db.String(128), unique=True)
 
   def __init__(self, username, password, email):
     self.username = username
     self.password = self.encrypt_password(password)
     self.email = email
-    self.api_key = None
 
   @property
   def is_authenticated(self):
@@ -60,6 +58,7 @@ class User(db.Model):
 
     """
     return sha256_crypt.encrypt(password)
+
   def  verify_password(self, password):
     """Check a password.
 

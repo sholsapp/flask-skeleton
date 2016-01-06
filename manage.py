@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import datetime
+
 from configobj import ConfigObj
 from validate import Validator
 from flask.ext.script import Manager
@@ -36,7 +38,7 @@ def prime_database():
   """Prime database with some fake data."""
   init_webapp()
   users = [
-    User('sholsapp', 'password', 'sholsapp@gmail.com'),
+    User(email='sholsapp@gmail.com', password='password', active=True, confirmed_at=datetime.datetime.utcnow()),
   ]
   for u in users:
     db.session.add(u)

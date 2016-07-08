@@ -16,6 +16,7 @@ from flask.ext.security import (
 from werkzeug.security import gen_salt
 
 from flaskskeleton.api import api
+from flaskskeleton.middleware import LoggingMiddleware
 from flaskskeleton.model import make_conn_str, db, Employee, User, Role
 
 
@@ -50,6 +51,9 @@ def restless_api_auth_func(*args, **kw):
 def init_webapp():
   """Initialize the web application."""
 
+  # logging.getLogger('flask_cors').level = logging.DEBUG
+  # app.wsgi_app = LoggingMiddleware(app.wsgi_app)
+
   # Note, this url namespace also exists for the Flask-Restless
   # extension and is where CRUD interfaces live, so be careful not to
   # collide with model names here. We could change this, but it's nice
@@ -62,9 +66,12 @@ def init_webapp():
   app.config['WTF_CSRF_ENABLED'] = False
   app.config['SECURITY_TOKEN_MAX_AGE'] = 60
   app.config['SECURITY_TOKEN_AUTHENTICATION_HEADER'] = 'Auth-Token'
+  # app.config['SECURITY_POST_LOGIN_VIEW'] = 'http://127.0.0.1:4200'
+  # app.config['CORS_HEADERS'] = 'Content-Type'
 
   # Initialize Flask-CORS
   CORS(app, supports_credentials=True)
+  # CORS(app, supports_credentials=True, resources={r"/*": {"origins": "*"}})
 
   # Initialize Flask-Bootstrap
   Bootstrap(app)
@@ -82,7 +89,8 @@ def init_webapp():
   manager = APIManager(
     app,
     flask_sqlalchemy_db=db,
-    preprocessors=dict(GET_MANY=[restless_api_auth_func]))
+    preprocessors=dict(GET_MANY=[restless_api_auth_func]),
+  )
   manager.create_api(Employee, methods=['GET', 'POST', 'OPTIONS'])
   return app
 

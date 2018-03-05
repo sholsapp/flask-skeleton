@@ -17,7 +17,7 @@ setup(
   url='http://www.flask.com',
   packages=['flaskskeleton'],
   install_requires=[
-    'Flask>=0.10.1',
+    'Flask',
     'configobj',
     'Flask-Bootstrap',
     'Flask-Script',

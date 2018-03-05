@@ -12,7 +12,7 @@ Heroku. Some notable parts used in this web application are:
 
 ## development
 
-Before you get started you'll need to have Python 2.6+ installed. After, you'll
+Before you get started you'll need to have Python 2.7+ installed. After, you'll
 need to also instal virtualenv. Research how to do this for whatever platform
 you run before continuing.
 
@@ -49,8 +49,7 @@ something like the following image.
 
 ![The flask-heroku application running in a web browser.](https://github.com/sholsapp/flask-heroku/blob/master/data/flask-heroku.png)
 
-## heroku
+Then, on your CLI, use curl and jq to inspect the JSON API that follows [JSON
+Schema](http://json-schema.org/).
 
-Before you can get started on Heroku, you'll need to have a Heroku account and
-their toolchain setup. To do that, follow the instructions at
-https://devcenter.heroku.com/articles/quickstart.
+![Using curl to inspect the JSON API](./data/api.png).

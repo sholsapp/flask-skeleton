@@ -6,7 +6,7 @@ from setuptools import setup
 
 README = None
 with open(os.path.abspath('README.md')) as fh:
-  README = fh.read()
+    README = fh.read()
 
 setup(
   name='flask-skeleton',

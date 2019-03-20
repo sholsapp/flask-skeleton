@@ -6,8 +6,9 @@ import time
 log = logging.getLogger(__name__)
 
 
-#: A function that takes no arguments and does nothing.
-no_op = lambda: time.time()
+def no_op():
+    """A function that takes no arguments and does nothing."""
+    return time.time()
 
 
 class BackgroundWorker(threading.Thread):

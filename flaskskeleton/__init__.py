@@ -1,22 +1,17 @@
 import logging
 
-from flask import Flask, request, render_template, jsonify
+from flask import Flask, render_template, jsonify
 from flask_bootstrap import Bootstrap
 from flask_cors import CORS
 from flask_restless import APIManager, ProcessingException
 from flask_security import (
-  RoleMixin,
   SQLAlchemyUserDatastore,
   Security,
-  UserMixin,
   auth_token_required,
   current_user,
-  login_required,
 )
-from werkzeug.security import gen_salt
 
 from flaskskeleton.api import api
-from flaskskeleton.middleware import LoggingMiddleware
 from flaskskeleton.model import make_conn_str, db, Employee, User, Role
 
 
@@ -52,7 +47,6 @@ def init_webapp():
     """Initialize the web application."""
 
     # logging.getLogger('flask_cors').level = logging.DEBUG
-    # app.wsgi_app = LoggingMiddleware(app.wsgi_app)
 
     # Note, this url namespace also exists for the Flask-Restless
     # extension and is where CRUD interfaces live, so be careful not to
@@ -79,7 +73,7 @@ def init_webapp():
 
     # Initialize Flask-Security
     user_datastore = SQLAlchemyUserDatastore(db, User, Role)
-    security = Security(app, user_datastore)
+    Security(app, user_datastore)
 
     # Initialize Flask-SQLAlchemy
     db.app = app

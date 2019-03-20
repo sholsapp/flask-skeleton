@@ -1,10 +1,10 @@
 import logging
 
 from flask import Flask, request, render_template, jsonify
-from flask.ext.bootstrap import Bootstrap
-from flask.ext.cors import CORS
-from flask.ext.restless import APIManager, ProcessingException
-from flask.ext.security import (
+from flask_bootstrap import Bootstrap
+from flask_cors import CORS
+from flask_restless import APIManager, ProcessingException
+from flask_security import (
   RoleMixin,
   SQLAlchemyUserDatastore,
   Security,
@@ -62,6 +62,7 @@ def init_webapp():
 
     # Initialize Flask configuration
     app.config['SQLALCHEMY_DATABASE_URI'] = make_conn_str()
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['SECRET_KEY'] = 'abc123'
     app.config['WTF_CSRF_ENABLED'] = False
     app.config['SECURITY_TOKEN_MAX_AGE'] = 60

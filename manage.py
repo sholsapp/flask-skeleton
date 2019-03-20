@@ -4,7 +4,7 @@ import datetime
 
 from configobj import ConfigObj
 from validate import Validator
-from flask.ext.script import Manager
+from flask_script import Manager
 import logging
 
 from flaskskeleton import app, init_webapp

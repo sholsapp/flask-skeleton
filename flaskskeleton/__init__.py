@@ -146,11 +146,14 @@ def authlib_update_token(name, token):
     return item.to_token()
 
 
-def init_webapp():
+def init_webapp(test=False):
     """Initialize the web application.
 
     Initializes and configures the Flask web application. Call this method to
     make the web application and respective database engine usable.
+
+    If initialized with `test=True` the application will use an in-memory
+    SQLite database, and should be used for unit testing, but not much else.
 
     """
 
@@ -163,7 +166,10 @@ def init_webapp():
     app.register_blueprint(api, url_prefix='/api')
 
     # Initialize Flask configuration
-    app.config['SQLALCHEMY_DATABASE_URI'] = make_conn_str()
+    if test:
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://'
+    else:
+        app.config['SQLALCHEMY_DATABASE_URI'] = make_conn_str()
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'abc123')
     app.config['SECURITY_TOKEN_MAX_AGE'] = 60

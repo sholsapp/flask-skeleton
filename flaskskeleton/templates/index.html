@@ -1,33 +1,10 @@
 {% extends "layout.html" %}
 
 {% block content %}
-<div class="alert alert-success">
-<button type="button" class="close" data-dismiss="alert">&times;</button>
-<strong>Yay!</strong> Everything looks like it is working.
-</div>
-
 <h1>
 Hello, world!
 </h1>
 
 <b>I was rendered using Jinja2 templates!</b>
-
-<table class="table">
-<tr>
-  <th>index</th>
-  <th>message</th>
-</tr>
-<tbody>
-{% for e in employees %}
-  <tr>
-    <td>{{ e.id }}</td>
-    <td>{{ e.first }}</td>
-    <td>{{ e.last }}</td>
-    <td>{{ e.position }}</td>
-    <td>{{ e.salary }}</td>
-  </tr>
-{% endfor %}
-</tbody>
-</table>
 
 {% endblock %}

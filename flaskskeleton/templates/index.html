@@ -5,6 +5,14 @@
 Hello, world!
 </h1>
 
-<b>I was rendered using Jinja2 templates!</b>
+<p>Things you can do:</p>
+
+<ul>
+    <li><a href="{{ url_for('index') }}">/</a></li>
+    <li><a href="{{ url_for('security.login') }}">/login</a></li>
+    <li><a href="{{ url_for('register') }}">/register</a></li>
+    <li><a href="{{ url_for('loginpass_google.login') }}">/google/login</a></li>
+    <li><a href="{{ url_for('calendar') }}">/calendar</a></li>
+</ul>
 
 {% endblock %}

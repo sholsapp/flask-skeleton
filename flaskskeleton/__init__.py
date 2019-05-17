@@ -1,19 +1,17 @@
 import logging
 import os
+import datetime
 
-from authlib.flask.client import OAuth
 from authlib.client import OAuth2Session
-from flask import Flask, render_template, jsonify, redirect, url_for
+from authlib.flask.client import OAuth
+from flask import Flask, render_template, jsonify, redirect, url_for, request, abort
 from flask_bootstrap import Bootstrap
 from flask_cors import CORS
 from flask_restless import APIManager, ProcessingException
-from flask_security import (
-  SQLAlchemyUserDatastore,
-  Security,
-  auth_token_required,
-  current_user,
-)
+from flask_security import SQLAlchemyUserDatastore, Security, auth_token_required, current_user
+from flask_security.utils import encrypt_password
 from loginpass import create_flask_blueprint, Google
+from werkzeug.security import gen_salt
 import sqlalchemy
 
 from flaskskeleton.api import api
@@ -100,10 +98,11 @@ def init_webapp():
     # Initialize Flask configuration
     app.config['SQLALCHEMY_DATABASE_URI'] = make_conn_str()
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['SECRET_KEY'] = 'abc123'
-    app.config['WTF_CSRF_ENABLED'] = False
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'abc123')
     app.config['SECURITY_TOKEN_MAX_AGE'] = 60
     app.config['SECURITY_TOKEN_AUTHENTICATION_HEADER'] = 'Auth-Token'
+    app.config['SECURITY_PASSWORD_HASH'] = 'bcrypt'
+    app.config['SECURITY_PASSWORD_SALT'] = os.environ.get('SALT', gen_salt(64))
 
     # Initialize Flask-CORS
     CORS(app, supports_credentials=True)
@@ -162,6 +161,47 @@ def calendar():
 @app.route('/')
 def index():
     return render_template('index.html', employees=Employee.query.all())
+
+@app.route('/register', methods=['GET'])
+def register():
+    return render_template('register.html')
+
+@app.route('/signup', methods=['POST'])
+def signup():
+
+    email = None
+    password = None
+
+    # Support old-style form posts.
+    if request.content_type == 'application/x-www-form-urlencoded':
+        email = request.form.get('email')
+        password = request.form.get('password')
+
+    # Support new-style JSON posts.
+    elif request.content_type == 'application/json':
+        email = request.json.get('email')
+        password = request.json.get('password')
+
+    # Consider using Flask-WTForms here and elsewhere to take care of proper
+    # validation for a real production application.
+    if not (email and password):
+        abort(503)
+
+    user = User(
+        email=email,
+        password=encrypt_password(password),
+        active=True,
+        confirmed_at=datetime.datetime.utcnow(),
+    )
+
+    db.session.add(user)
+    try:
+        db.session.commit()
+    except sqlalchemy.exc.IntegrityError:
+        log.error('Failed to commit new user...')
+        db.session.rollback()
+
+    return redirect(url_for('index'))
 
 
 @app.route('/protected')

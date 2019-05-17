@@ -188,7 +188,7 @@ def init_webapp():
         scope=' '.join([
             'openid',
             'https://www.googleapis.com/auth/userinfo.profile',
-            'https://www.googleapis.com/auth/calendar',
+            'https://www.googleapis.com/auth/calendar.readonly',
         ])
     )
 

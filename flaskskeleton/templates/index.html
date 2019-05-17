@@ -2,7 +2,11 @@
 
 {% block content %}
 <h1>
-Hello, world!
+	{% if user.email %}
+	Hello, {{ user.email }}
+	{% else %}
+	Hello, anon
+	{%endif %}
 </h1>
 
 <p>Things you can do:</p>
@@ -10,6 +14,7 @@ Hello, world!
 <ul>
     <li><a href="{{ url_for('index') }}">/</a></li>
     <li><a href="{{ url_for('security.login') }}">/login</a></li>
+    <li><a href="{{ url_for('security.logout') }}">/logout</a></li>
     <li><a href="{{ url_for('register') }}">/register</a></li>
     <li><a href="{{ url_for('loginpass_google.login') }}">/google/login</a></li>
     <li><a href="{{ url_for('calendar') }}">/calendar</a></li>

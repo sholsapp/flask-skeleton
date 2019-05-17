@@ -2,27 +2,25 @@ import logging
 import os
 import datetime
 
-from authlib.client import OAuth2Session
 from authlib.flask.client import OAuth
 from flask import Flask, render_template, jsonify, redirect, url_for, request, abort
 from flask_bootstrap import Bootstrap
 from flask_cors import CORS
 from flask_restless import APIManager, ProcessingException
-from flask_security import SQLAlchemyUserDatastore, Security, auth_token_required, current_user
+from flask_security import SQLAlchemyUserDatastore, Security, auth_token_required, current_user, login_required, login_user
 from flask_security.utils import encrypt_password
 from loginpass import create_flask_blueprint, Google
-from werkzeug.security import gen_salt
+import authlib
 import sqlalchemy
 
 from flaskskeleton.api import api
-from flaskskeleton.model import make_conn_str, db, Employee, User, Role, OAuth2Token
+from flaskskeleton.model import make_conn_str, db, User, Role, OAuth2Token
 
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 
-# Initialize Flask and register a blueprint
 app = Flask(__name__)
 
 
@@ -46,46 +44,115 @@ def restless_api_auth_func(*args, **kw):
         raise ProcessingException(description='Not authenticated!', code=401)
 
 
-def handle_authorize(remote, token, user_info):
+def authlib_handle_authorize(remote, token, user_info):
+    """Handle an OAuth2 authorization flow.
 
-    # TODO(sholsapp): Need to keep a mapping between this OAuth user_info and
-    # the current_user (Flask Security construct). Need to make sure that folks
-    # are logged in by this point.  The user_info follows a standard at
-    # http://openid.net/specs/openid-connect-core-1_0.html#StandardClaims.
-    user_id = 0
+    This method is a OAuthlib construct, see documentation for more
+    information.
+
+    Handle an OAuth2 authorization flow by updating or creating a record for
+    the authorization in our database.
+
+    """
+
+    log.info('Handling authorize for [%s] against [%s].', user_info.email, remote.name)
+
+    if not current_user.is_authenticated:
+        return redirect(url_for('security.login'))
+
+    user_id = current_user.id
+
+    t = OAuth2Token.query.filter_by(
+        user_id=user_id,
+        name=remote.name,
+    ).first()
+    if not t:
+        t = OAuth2Token(
+            user_id=user_id,
+            name=remote.name,
+        )
+        current_user.tokens.append(t)
+
+    t.from_token(token)
+
+    db.session.add(t)
 
     try:
-        t = OAuth2Token.query.filter_by(user_id=user_id, name=remote.name).one()
-        t.token_type = token['token_type']
-        t.access_token = token['access_token']
-        t.refresh_token = token['refresh_token']
-        t.expires_at = token['expires_at']
-    except sqlalchemy.orm.exc.NoResultFound:
-        db.session.add(OAuth2Token(
-            user_id=0,
-            name=remote.name,
-            token_type=token['token_type'],
-            access_token=token['access_token'],
-            refresh_token=token['refresh_token'],
-            expires_at=token['expires_at'],
-        ))
-    except sqlalchemy.orm.exc.MultipleResultsFound:
-        abort(500)
-
-    db.session.commit()
+        db.session.commit()
+    except sqlalchemy.exc.IntegrityError:
+        log.error('Failed to commit new or updated token...')
+        db.session.rollback()
 
     return redirect(url_for('calendar'))
 
 
-def fetch_token(name):
+def authlib_fetch_token(name):
+    """Fetch a token from the database.
+
+    This method is a OAuthlib construct, see documentation for more
+    information.
+
+    Fetch a token from the database to refresh or initialize a new session for
+    the signed in user.
+
+    :param str name: The name of the remote to refresh or initialize the new
+        session for.
+
+    """
+
+    log.info('Fetching token for [%s].', name)
+
+    user_id = current_user.id
+
     item = OAuth2Token.query.filter_by(
-	name=name, user_id=0,
+        name=name, user_id=user_id,
     ).first()
+
+    if item:
+        return item.to_token()
+
+
+def authlib_update_token(name, token):
+    """Update a token.
+
+    This method is a OAuthlib construct, see documentation for more
+    information.
+
+    Update a token that has expired for the the remote.
+
+    :param str name: The name of the remote to update the token for.
+
+    """
+
+    log.info('Updating token for [%s].', name)
+
+    item = OAuth2Token.query.filter_by(
+        name=name, user_id=current_user.id
+    ).first()
+
+    if not item:
+        item = OAuth2Token(name=name, user_id=current_user.id)
+
+    # Do an in-place update from the token.
+    item.from_token(token)
+
+    db.session.add(item)
+    try:
+        db.session.commit()
+    except sqlalchemy.exc.IntegrityError:
+        log.error('Failed to commit updated token...')
+        db.session.rollback()
+
     return item.to_token()
 
 
 def init_webapp():
-    """Initialize the web application."""
+    """Initialize the web application.
+
+    Initializes and configures the Flask web application. Call this method to
+    make the web application and respective database engine usable.
+
+    """
 
     # logging.getLogger('flask_cors').level = logging.DEBUG
 
@@ -102,7 +169,7 @@ def init_webapp():
     app.config['SECURITY_TOKEN_MAX_AGE'] = 60
     app.config['SECURITY_TOKEN_AUTHENTICATION_HEADER'] = 'Auth-Token'
     app.config['SECURITY_PASSWORD_HASH'] = 'bcrypt'
-    app.config['SECURITY_PASSWORD_SALT'] = os.environ.get('SALT', gen_salt(64))
+    app.config['SECURITY_PASSWORD_SALT'] = os.environ.get('SALT', 'salt123')
 
     # Initialize Flask-CORS
     CORS(app, supports_credentials=True)
@@ -124,10 +191,13 @@ def init_webapp():
             'https://www.googleapis.com/auth/calendar',
         ])
     )
+
+    # Initialize Authlib.
     oauth = OAuth()
-    oauth.init_app(app, fetch_token=fetch_token)
-    google_blueprint = create_flask_blueprint(Google, oauth, handle_authorize)
+    oauth.init_app(app, fetch_token=authlib_fetch_token, update_token=authlib_update_token)
+    google_blueprint = create_flask_blueprint(Google, oauth, authlib_handle_authorize)
     app.register_blueprint(google_blueprint, url_prefix='/google')
+    # Save the oauth object in the app so handlers can use it to build clients.
     app.oauth = oauth
 
     # Initialize Flask-SQLAlchemy
@@ -137,37 +207,78 @@ def init_webapp():
 
     # Initialize Flask-Restless
     manager = APIManager(
-      app,
-      flask_sqlalchemy_db=db,
-      preprocessors=dict(GET_MANY=[restless_api_auth_func]),
+        app,
+        flask_sqlalchemy_db=db,
+        preprocessors=dict(GET_MANY=[restless_api_auth_func]),
     )
-    manager.create_api(Employee, methods=['GET', 'POST', 'OPTIONS'])
+    # manager.create_api(TableName methods=['GET', 'POST', 'OPTIONS'])
     return app
 
 
 @app.route('/calendar')
+@login_required
 def calendar():
-    # FIXME: This needs to be set to the current user.
-    user_id = 0
-    token = OAuth2Token.query.filter_by(user_id=user_id, name='google').one()
-    response = app.oauth.google.get(
-        'calendar/v3/calendars/primary/events',
-        params={'maxResults': 10, 'timeMin': '2017-01-01T12:00:00Z'},
-    )
-    if response.ok:
-        return render_template('calendar.html', events=response.json()['items'])
+    """A interesting integration.
+
+    Use an OAuth client to do somethign interesting.
+
+    Demonstrates how to use the OAuthlib client that we initiated earlier and
+    saved in the app object.
+
+    """
+
+    user_id = current_user.id
+
+    # Just ensure that the user has a token, otherwise redirect them to the
+    # OAuth login/authorization flow.
+    try:
+        OAuth2Token.query.filter_by(user_id=user_id, name='google').one()
+    except sqlalchemy.orm.exc.NoResultFound:
+        return redirect(url_for('loginpass_google.login'))
+
+    try:
+        response = app.oauth.google.get(
+            'calendar/v3/calendars/primary/events',
+            params={'maxResults': 10, 'timeMin': '2017-01-01T12:00:00Z'},
+        )
+        if response.ok:
+            return render_template('calendar.html', events=response.json()['items'])
+    except authlib.oauth2.rfc6750.errors.InvalidTokenError:
+        log.error('Request made with invalid token...')
+        abort(500)
+    except authlib.client.errors.MissingTokenError:
+        log.error('Request made without a token...')
+        abort(500)
 
 
 @app.route('/')
 def index():
-    return render_template('index.html', employees=Employee.query.all())
+    """A landing page.
 
-@app.route('/register', methods=['GET'])
+    Nothing too interesting here.
+
+    """
+    return render_template('index.html', user=current_user)
+
+
+@app.route('/register')
 def register():
+    """A registration page.
+
+    Renders a simple registration page to create a new user.
+
+    """
     return render_template('register.html')
+
 
 @app.route('/signup', methods=['POST'])
 def signup():
+    """A signup endpoint.
+
+    Look for "email" and "password" fields in form data or JSON payload to sign
+    up a user.
+
+    """
 
     email = None
     password = None
@@ -182,8 +293,6 @@ def signup():
         email = request.json.get('email')
         password = request.json.get('password')
 
-    # Consider using Flask-WTForms here and elsewhere to take care of proper
-    # validation for a real production application.
     if not (email and password):
         abort(503)
 
@@ -201,12 +310,22 @@ def signup():
         log.error('Failed to commit new user...')
         db.session.rollback()
 
+    # On sign up, also log the new user in before redirecting them to the landing
+    # page.
+    login_user(user)
+
     return redirect(url_for('index'))
 
 
 @app.route('/protected')
 @auth_token_required
 def json_endpoint():
+    """A protected API endpoint.
+
+    Demonstrates how to expose a JWT authentication protected API endpoint to a
+    upstream.
+
+    """
     return jsonify({
         'username': current_user.email,
         'is_authenticated': current_user.is_authenticated,

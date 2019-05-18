@@ -209,7 +209,10 @@ def init_webapp(test=False):
     # Initialize Flask-SQLAlchemy
     db.app = app
     db.init_app(app)
-    db.create_all()
+    # NOTE: You don't want to use this if you're using alembic, since alembic
+    # is now in charge of creating/upgrading/downgrading your database. If you
+    # choose to not use alembic, you can add this line here.
+    # db.create_all()
 
     # Initialize Flask-Restless
     manager = APIManager(

@@ -1,3 +1,5 @@
+import os
+
 from flask_security import UserMixin, RoleMixin
 from flask_sqlalchemy import SQLAlchemy
 
@@ -68,4 +70,4 @@ class OAuth2Token(db.Model):
 
 def make_conn_str():
     """Make an local database file on disk."""
-    return 'sqlite:///flaskskeleton.db'
+    return 'sqlite:///{cwd}/database.db'.format(cwd=os.path.abspath(os.getcwd()))

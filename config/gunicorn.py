@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from flaskheroku import init_webapp
+from flaskskeleton import init_webapp
 
 
 workers = 2
@@ -11,4 +11,4 @@ def on_starting(server):
 
 
 def post_fork(server, worker):
-  init_webapp()
+    init_webapp()

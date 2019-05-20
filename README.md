@@ -19,12 +19,22 @@ application on your Google API Console. Export the client/secret to
 `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`, respectively. If you don't want this
 integration, deleting this code should be straight forward.
 
-# Documentation
+# documentation
 
-- [Development](./docs/developing.md)
-- [Alembic](./docs/bootstrapping-alembic.md)
+- [Developing](./docs/developing.md)
+- [Bootstrapping Alembic](./docs/bootstrapping-alembic.md)
+- Environment (WIP)
 
-# Related Works
+# build
+
+Use Docker to build and run the server locally.
+
+```bash
+docker build -t sholsapp/flask-skeleton .
+docker run --publish 5000:5000 sholsapp/flask-skeleton
+```
+
+# related works
 
 Also see:
 

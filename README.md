@@ -21,7 +21,7 @@ integration, deleting this code should be straight forward.
 
 # Documentation
 
-- [Development](./docs/development.md)
+- [Development](./docs/developing.md)
 - [Alembic](./docs/bootstrapping-alembic.md)
 
 # Related Works

@@ -12,7 +12,7 @@ from flaskskeleton.model import db
 from flaskskeleton.worker import BackgroundWorker
 
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 
@@ -60,7 +60,10 @@ def start_background_worker():
 def prime_database():
     """Prime database with some fake data."""
     init_webapp()
-    # ...
+    # Initialize Flask-SQLAlchemy
+    db.app = app
+    db.init_app(app)
+    db.create_all()
 
 
 @manager.command

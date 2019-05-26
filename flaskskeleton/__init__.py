@@ -10,6 +10,7 @@ from flask_restless import APIManager, ProcessingException
 from flask_security import SQLAlchemyUserDatastore, Security, auth_token_required, current_user, login_required, login_user
 from flask_security.utils import encrypt_password
 from loginpass import create_flask_blueprint, Google
+from werkzeug.contrib.fixers import ProxyFix
 import authlib
 import sqlalchemy
 
@@ -152,6 +153,9 @@ def init_webapp(test=False):
     SQLite database, and should be used for unit testing, but not much else.
 
     """
+
+    # Make app work with proxies (like nginx) that set proxy headers.
+    app.wsgi_app = ProxyFix(app.wsgi_app)
 
     # logging.getLogger('flask_cors').level = logging.DEBUG
 

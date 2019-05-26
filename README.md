@@ -4,13 +4,14 @@ A "hello world" style Flask web server application that applies good practices
 learned over the years. This application is meant to be copied and pasted,
 refactored, and specialized to suit your needs.
 
-  1. [Flask](http://flask.pocoo.org/)
-  2. [Gunicorn](http://gunicorn.org/)
-  3. [Flask-Restless](https://flask-restless.readthedocs.org/en/latest/)
-  4. [Flask-SQLAlchemy](https://pythonhosted.org/Flask-SQLAlchemy/)
-  5. [Flask-Bootstrap](http://pythonhosted.org/Flask-Bootstrap/)
-  6. [Flask-Script](http://flask-script.readthedocs.org/en/latest/)
-  7. [Authlib](https://docs.authlib.org/en/latest/index.html)
+- [Authlib](https://docs.authlib.org/en/latest/index.html)
+- [Flask-Bootstrap](http://pythonhosted.org/Flask-Bootstrap/)
+- [Flask-Restless](https://flask-restless.readthedocs.org/en/latest/)
+- [Flask-SQLAlchemy](https://pythonhosted.org/Flask-SQLAlchemy/)
+- [Flask-Script](http://flask-script.readthedocs.org/en/latest/)
+- [Flask-Security](https://pythonhosted.org/Flask-Security/)
+- [Flask](http://flask.pocoo.org/)
+- [Gunicorn](http://gunicorn.org/)
 
 Out of the box, it comes with a simple OAuth2 integration against Google
 Calendar API.  If you want to use this integration, you'll need to follow the
@@ -39,3 +40,4 @@ docker run --publish 5000:5000 sholsapp/flask-skeleton
 Also see:
 
   1. [sean-/flask-skeleton](https://github.com/sean-/flask-skeleton)
+  2. [graup/flask-restless-security](https://github.com/graup/flask-restless-security/)

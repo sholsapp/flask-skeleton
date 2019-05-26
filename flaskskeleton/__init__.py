@@ -24,7 +24,8 @@ log = logging.getLogger(__name__)
 app = Flask(__name__)
 
 
-def restless_api_auth_func(*args, **kw):
+@auth_token_required
+def restless_api_auth_func(*args, **kwargs):
     """A request processor that ensures requests are authenticated.
 
     Flask-Restless endpoints are generated automatically and thus do not have a
@@ -34,14 +35,7 @@ def restless_api_auth_func(*args, **kw):
     contract.
 
     """
-    @auth_token_required
-    def check_authentication():
-        return
-    rsp = check_authentication()
-    # TODO(sholsapp): There are additional response codes that would result in
-    # processing exceptions, this need to be addressed here.
-    if rsp and rsp.status_code in [401]:
-        raise ProcessingException(description='Not authenticated!', code=401)
+    return
 
 
 def authlib_handle_authorize(remote, token, user_info):
@@ -111,6 +105,8 @@ def authlib_fetch_token(name):
     if item:
         return item.to_token()
 
+    log.warning('Failed to fetch token for [%s].', name)
+
 
 def authlib_update_token(name, token):
     """Update a token.
@@ -170,12 +166,21 @@ def init_webapp(test=False):
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://'
     else:
         app.config['SQLALCHEMY_DATABASE_URI'] = make_conn_str()
+
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'abc123')
     app.config['SECURITY_TOKEN_MAX_AGE'] = 60
     app.config['SECURITY_TOKEN_AUTHENTICATION_HEADER'] = 'Auth-Token'
     app.config['SECURITY_PASSWORD_HASH'] = 'bcrypt'
     app.config['SECURITY_PASSWORD_SALT'] = os.environ.get('SALT', 'salt123')
+    app.config['SECURITY_REGISTERABLE'] = True
+    app.config['SECURITY_CONFIRMABLE'] = False
+    app.config['SECURITY_SEND_REGISTER_EMAIL'] = False
+
+    # This thing is a supreme PIA with API, and because we're using token based
+    # authentication.
+    app.config['WTF_CSRF_ENABLED'] = False
+
 
     # Initialize Flask-CORS
     CORS(app, supports_credentials=True)
@@ -190,6 +195,7 @@ def init_webapp(test=False):
 
     app.config['GOOGLE_CLIENT_ID'] = os.environ.get('GOOGLE_CLIENT_ID', 'abc123')
     app.config['GOOGLE_CLIENT_SECRET'] = os.environ.get('GOOGLE_CLIENT_SECRET', 'password')
+    app.config['GOOGLE_REFRESH_TOKEN_URL'] = 'https://www.googleapis.com/oauth2/v4/token'
     app.config['GOOGLE_CLIENT_KWARGS'] = dict(
         scope=' '.join([
             'openid',
@@ -268,62 +274,6 @@ def index():
 
     """
     return render_template('index.html', user=current_user)
-
-
-@app.route('/register')
-def register():
-    """A registration page.
-
-    Renders a simple registration page to create a new user.
-
-    """
-    return render_template('register.html')
-
-
-@app.route('/signup', methods=['POST'])
-def signup():
-    """A signup endpoint.
-
-    Look for "email" and "password" fields in form data or JSON payload to sign
-    up a user.
-
-    """
-
-    email = None
-    password = None
-
-    # Support old-style form posts.
-    if request.content_type == 'application/x-www-form-urlencoded':
-        email = request.form.get('email')
-        password = request.form.get('password')
-
-    # Support new-style JSON posts.
-    elif request.content_type == 'application/json':
-        email = request.json.get('email')
-        password = request.json.get('password')
-
-    if not (email and password):
-        abort(503)
-
-    user = User(
-        email=email,
-        password=encrypt_password(password),
-        active=True,
-        confirmed_at=datetime.datetime.utcnow(),
-    )
-
-    db.session.add(user)
-    try:
-        db.session.commit()
-    except sqlalchemy.exc.IntegrityError:
-        log.error('Failed to commit new user...')
-        db.session.rollback()
-
-    # On sign up, also log the new user in before redirecting them to the landing
-    # page.
-    login_user(user)
-
-    return redirect(url_for('index'))
 
 
 @app.route('/protected')

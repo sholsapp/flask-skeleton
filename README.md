@@ -4,6 +4,7 @@ A "hello world" style Flask web server application that applies good practices
 learned over the years. This application is meant to be copied and pasted,
 refactored, and specialized to suit your needs.
 
+- [APScheduler](https://apscheduler.readthedocs.io/en/latest/index.html)
 - [Authlib](https://docs.authlib.org/en/latest/index.html)
 - [Flask-Bootstrap](http://pythonhosted.org/Flask-Bootstrap/)
 - [Flask-Restless](https://flask-restless.readthedocs.org/en/latest/)

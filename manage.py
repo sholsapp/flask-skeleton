@@ -9,7 +9,6 @@ import logging
 
 from flaskskeleton import app, init_webapp
 from flaskskeleton.model import db
-from flaskskeleton.worker import BackgroundWorker
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -40,20 +39,6 @@ class GunicornServer(Command):
 manager = Manager(app)
 
 manager.add_command("gunicorn", GunicornServer())
-
-
-@manager.command
-def start_background_worker():
-    """Start the background worker."""
-    worker = BackgroundWorker(interval=1)
-    log.info('Starting worker. Hit CTRL-C to exit!')
-    worker.start()
-    while worker.is_alive():
-        try:
-            worker.join(1)
-        except KeyboardInterrupt:
-            log.info('Shutting down worker thread!')
-            worker.stop()
 
 
 @manager.command

@@ -1,39 +1,31 @@
-import logging
-import threading
-import time
+from datetime import datetime
+import os
+
+from apscheduler.schedulers.gevent import GeventScheduler
 
 
-log = logging.getLogger(__name__)
+def tick():
+    print('Tick! The time is: %s' % datetime.now())
 
 
-def no_op():
-    """A function that takes no arguments and does nothing."""
-    return time.time()
+def main():
 
+    scheduler = GeventScheduler()
 
-class BackgroundWorker(threading.Thread):
-    """A background worker.
+    url = os.environ.get('SQLALCHEMY_DATABASE_URI', 'sqlite:///database.db')
 
-    :param int interval: The number of seconds to wait before re-running the work
-      function.
-    :param callable func: A function that takes no arguments that when called
-      performs the work that the background worker should perform.
+    scheduler.add_jobstore('sqlalchemy', url=url)
 
-    """
+    scheduler.add_job(tick, 'interval', seconds=3, id='example_job', replace_existing=True)
 
-    def __init__(self, interval=60, func=no_op):
-        threading.Thread.__init__(self)
-        self.interval = interval
-        self.running = True
-        self.func = func
+    # g is the greenlet that runs the scheduler loop.
+    g = scheduler.start()
 
-    def stop(self):
-        """Stop the execution thread."""
-        self.running = False
+    print('Press Ctrl+{0} to exit'.format('Break' if os.name == 'nt' else 'C'))
 
-    def run(self):
-        """Start the execution thread."""
-        while self.running:
-            ret = self.func()
-            log.info('Worker function returns: %s', ret)
-            time.sleep(self.interval)
+    # Execution will block here until Ctrl+C (Ctrl+Break on Windows) is pressed.
+    try:
+        g.join()
+    except (KeyboardInterrupt, SystemExit):
+        pass
+

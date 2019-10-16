@@ -41,4 +41,5 @@ docker run --publish 5000:5000 sholsapp/flask-skeleton
 Also see:
 
   1. [sean-/flask-skeleton](https://github.com/sean-/flask-skeleton)
-  2. [graup/flask-restless-security](https://github.com/graup/flask-restless-security/)
+  2. [graup/flask-restless-security](https://github.com/graup/flask-restless-security)
+  3. [imwilsonxu/fbone](https://github.com/imwilsonxu/fbone)

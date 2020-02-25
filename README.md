@@ -43,3 +43,4 @@ Also see:
   1. [sean-/flask-skeleton](https://github.com/sean-/flask-skeleton)
   2. [graup/flask-restless-security](https://github.com/graup/flask-restless-security)
   3. [imwilsonxu/fbone](https://github.com/imwilsonxu/fbone)
+  4. [xen/flask-project-template](https://github.com/xen/flask-project-template)

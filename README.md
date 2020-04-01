@@ -44,3 +44,4 @@ Also see:
   2. [graup/flask-restless-security](https://github.com/graup/flask-restless-security)
   3. [imwilsonxu/fbone](https://github.com/imwilsonxu/fbone)
   4. [xen/flask-project-template](https://github.com/xen/flask-project-template)
+  5. [jelmerdejong/flask-app-blueprint](https://github.com/jelmerdejong/flask-app-blueprint)

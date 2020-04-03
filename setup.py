@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from setuptools import setup
+from setuptools import setup, find_packages
 import os
 
 
@@ -15,11 +15,30 @@ setup(
     author='Stephen Holsapple',
     author_email='sholsapp@gmail.com',
     url='http://www.flask.com',
-    packages=['flaskskeleton'],
-    # These are in requirements.txt.
-    install_requires=[],
+    packages=find_packages(),
+    zip_safe=False,
+    include_package_data=True,
+     package_data={
+        # If any package contains *.txt or *.rst files, include them:
+        "": ["*.html"],
+    },
+    install_requires=[
+        'APScheduler',
+        'Flask',
+        'Flask-Bootstrap',
+        'Flask-Cors',
+        'Flask-REST-JSONAPI',
+        'Flask-Restless',
+        'Flask-SQLALchemy',
+        'Flask-Script',
+        'Flask-Security',
+        'backoff',
+        'configobj',
+        'gunicorn',
+    ],
     entry_points = {
         'console_scripts': [
+            'flask-skeleton=flaskskeleton.controller:main',
             'flask-skeleton-worker=flaskskeleton.worker:main',
         ],
     }

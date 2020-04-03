@@ -1,16 +1,31 @@
-FROM ubuntu
+# Builder builds a debian package.
+FROM ubuntu as builder
 RUN apt-get update
 RUN apt-get --assume-yes install \
-    python-dev \
-    python-setuptools \
-    python-pip \
-    build-essential
-WORKDIR /build/
-COPY requirements.txt /build/
-RUN pip install -r requirements.txt
-COPY setup.py README.md manage.py /build/
-COPY flaskskeleton /build/flaskskeleton
-COPY config /build/config
-RUN python setup.py install
-EXPOSE 5000
-CMD ["./manage.py", "runserver", "--host", "0.0.0.0", "--port", "5000"]
+    build-essential \
+    debhelper \
+    devscripts \
+    dh-virtualenv \
+    equivs \
+    python3-dev \
+    python3-pip \
+    python3-venv \
+    python3-setuptools
+WORKDIR /build/flask-skeleton
+COPY requirements.txt /build/flask-skeleton
+COPY setup.py README.md manage.py /build/flask-skeleton/
+COPY debian /build/flask-skeleton/debian
+COPY flaskskeleton /build/flask-skeleton/flaskskeleton
+COPY config /build/flask-skeleton/config
+RUN dpkg-buildpackage -us -uc -b
+
+# This builds a runnable development server.
+from ubuntu
+WORKDIR /tmp
+RUN apt-get update
+RUN apt-get --assume-yes install \
+    python3 \
+    sudo
+COPY --from=builder /build/flask-skeleton_0.1-1_amd64.deb /tmp
+RUN dpkg -i /tmp/flask-skeleton_0.1-1_amd64.deb
+CMD service flask-skeleton restart && tail -F /opt/flask-skeleton/var/log/flask-skeleton.log

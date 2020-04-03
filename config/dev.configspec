@@ -1,0 +1,4 @@
+[webapp]
+  host=string(default=127.0.0.1)
+  port=string(default=5000)
+  database_uri=string(default="sqlite://database.db")

@@ -1,0 +1,11 @@
+#!/bin/sh
+echo "POSTINST!"
+
+# Create the required directories.
+mkdir -p /opt/flask-skeleton/var/run/
+mkdir -p /opt/flask-skeleton/var/log/
+mkdir -p /opt/flask-skeleton/config/
+
+# Install the unit file.
+cp /opt/flask-skeleton/config/flask-skeleton.init /etc/init.d/flask-skeleton
+chmod 755 /etc/init.d/flask-skeleton

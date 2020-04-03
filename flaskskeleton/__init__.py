@@ -143,7 +143,7 @@ def authlib_update_token(name, token):
     return item.to_token()
 
 
-def init_webapp(test=False):
+def init_webapp(config, test=False):
     """Initialize the web application.
 
     Initializes and configures the Flask web application. Call this method to
@@ -169,8 +169,9 @@ def init_webapp(test=False):
     if test:
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://'
     else:
-        app.config['SQLALCHEMY_DATABASE_URI'] = make_conn_str()
+        app.config['SQLALCHEMY_DATABASE_URI'] = config['webapp']['database_uri']
 
+    # FIXME: Port these over to configobj.
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'abc123')
     app.config['SECURITY_TOKEN_MAX_AGE'] = 60

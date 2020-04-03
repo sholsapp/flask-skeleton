@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 
 import datetime
-
-from configobj import ConfigObj
-from validate import Validator
-from flask_script import Manager, Command, Option
 import logging
 
-from flaskskeleton import app, init_webapp
+from configobj import ConfigObj
+from flask_script import Manager, Command, Option
+
+from flaskskeleton import app
+from flaskskeleton.controller import start_webapp
 from flaskskeleton.model import db
 
 
@@ -42,22 +42,10 @@ manager.add_command("gunicorn", GunicornServer())
 
 
 @manager.command
-def prime_database():
-    """Prime database with some fake data."""
-    init_webapp()
-    # Initialize Flask-SQLAlchemy
-    db.app = app
-    db.init_app(app)
-    db.create_all()
-
-
-@manager.command
 def runserver(host="127.0.0.1", port="5000"):
     """Override default `runserver` to init webapp before running."""
-    app = init_webapp()
-    config = ConfigObj('config/sample.config', configspec='config/sample.configspec')
-    app.config_obj = config
-    app.run(host=host, port=int(port))
+    config = ConfigObj('config/dev.config', configspec='config/dev.configspec')
+    start_webapp(config)
 
 
 if __name__ == "__main__":

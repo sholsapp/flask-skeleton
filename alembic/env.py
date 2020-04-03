@@ -28,13 +28,12 @@ target_metadata = db.metadata
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
+from configobj import ConfigObj
+configobj = ConfigObj('config/dev.config', configspec='config/dev.configspec')
 
-# Set the databases URI the same way that the application does it.
-from flaskskeleton import init_webapp, app
-init_webapp()
 alembic_config = config.get_section(config.config_ini_section)
-config.set_main_option('sqlalchemy.url', app.config['SQLALCHEMY_DATABASE_URI'])
-alembic_config['sqlalchemy.url'] = app.config['SQLALCHEMY_DATABASE_URI']
+config.set_main_option('sqlalchemy.url', configobj['webapp']['database_uri'])
+alembic_config['sqlalchemy.url'] = configobj['webapp']['database_uri']
 
 
 def run_migrations_offline():

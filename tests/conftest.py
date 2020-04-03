@@ -7,8 +7,14 @@ from flaskskeleton import init_webapp
 @pytest.fixture(scope='module')
 def app(request):
     app = Flask(__name__)
-    app.config['SERVER_NAME'] = 'localhost'
-    app = init_webapp(test=True)
+    config = {
+        'webapp': {
+            'host': 'localhost',
+            'port': '5000',
+            'database_uri': 'sqlite://',
+        }
+    }
+    app = init_webapp(config, test=True)
     ctx = app.app_context()
     ctx.push()
 

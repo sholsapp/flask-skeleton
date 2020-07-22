@@ -68,3 +68,4 @@ Deploy the .deb as you see fit.
   4. [xen/flask-project-template](https://github.com/xen/flask-project-template)
   5. [jelmerdejong/flask-app-blueprint](https://github.com/jelmerdejong/flask-app-blueprint)
   6. [sdetautomation/flask-api](https://github.com/sdetautomation/flask-api)
+  7. [cburmeister/flask-bones](https://github.com/cburmeister/flask-bones)

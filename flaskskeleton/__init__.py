@@ -250,7 +250,7 @@ def calendar():
     try:
         OAuth2Token.query.filter_by(user_id=user_id, name="google").one()
     except sqlalchemy.orm.exc.NoResultFound:
-        return redirect(url_for("loginpass_google.login"))
+        return redirect(url_for("loginpass.login", name="google"))
 
     try:
         response = app.oauth.google.get(

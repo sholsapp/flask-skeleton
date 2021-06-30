@@ -2,7 +2,7 @@ import logging
 import os
 import datetime
 
-from authlib.flask.client import OAuth
+from authlib.integrations.flask_client import OAuth
 from flask import Flask, render_template, jsonify, redirect, url_for, request, abort
 from flask_bootstrap import Bootstrap
 from flask_cors import CORS
@@ -203,11 +203,12 @@ def init_webapp(config_path, test=False):
             'https://www.googleapis.com/auth/calendar.readonly',
         ])
     )
+    app.config['GOOGLE_AUTHORIZE_PARAMS'] = {'access_type': 'offline'}
 
     # Initialize Authlib.
     oauth = OAuth()
     oauth.init_app(app, fetch_token=authlib_fetch_token, update_token=authlib_update_token)
-    google_blueprint = create_flask_blueprint(Google, oauth, authlib_handle_authorize)
+    google_blueprint = create_flask_blueprint([Google], oauth, authlib_handle_authorize)
     app.register_blueprint(google_blueprint, url_prefix='/google')
     # Save the oauth object in the app so handlers can use it to build clients.
     app.oauth = oauth

@@ -6,11 +6,11 @@ from authlib.flask.client import OAuth
 from flask import Flask, render_template, jsonify, redirect, url_for, request, abort
 from flask_bootstrap import Bootstrap
 from flask_cors import CORS
-from flask_restless import APIManager, ProcessingException
 from flask_security import SQLAlchemyUserDatastore, Security, auth_token_required, current_user, login_required, login_user
 from flask_security.utils import encrypt_password
 from loginpass import create_flask_blueprint, Google
-from werkzeug.contrib.fixers import ProxyFix
+from werkzeug.middleware.proxy_fix import ProxyFix
+from configobj import ConfigObj
 import authlib
 import sqlalchemy
 
@@ -23,20 +23,6 @@ log = logging.getLogger(__name__)
 
 
 app = Flask(__name__)
-
-
-@auth_token_required
-def restless_api_auth_func(*args, **kwargs):
-    """A request processor that ensures requests are authenticated.
-
-    Flask-Restless endpoints are generated automatically and thus do not have a
-    Flask route function that we can decorate with the
-    :func:`flask.ext.security.auth_token_required` decorator. This function
-    mimics the route function and satisfies the Flask-Restless request processor
-    contract.
-
-    """
-    return
 
 
 def authlib_handle_authorize(remote, token, user_info):
@@ -143,7 +129,7 @@ def authlib_update_token(name, token):
     return item.to_token()
 
 
-def init_webapp(config, test=False):
+def init_webapp(config_path, test=False):
     """Initialize the web application.
 
     Initializes and configures the Flask web application. Call this method to
@@ -152,7 +138,17 @@ def init_webapp(config, test=False):
     If initialized with `test=True` the application will use an in-memory
     SQLite database, and should be used for unit testing, but not much else.
 
+    :param config_path: The path to the ConfigObj configuration file.
+    :param test: True if should initialize the webapp for testing (use
+        in-memory database).
+
     """
+
+    try:
+        config = ConfigObj(config_path, configspec=f'{config_path}spec')
+    except OSError:
+        print(f"Failed to load the configuration file at {config_path}.")
+        sys.exit(1)
 
     # Make app work with proxies (like nginx) that set proxy headers.
     app.wsgi_app = ProxyFix(app.wsgi_app)
@@ -185,7 +181,6 @@ def init_webapp(config, test=False):
     # This thing is a supreme PIA with API, and because we're using token based
     # authentication.
     app.config['WTF_CSRF_ENABLED'] = False
-
 
     # Initialize Flask-CORS
     CORS(app, supports_credentials=True)
@@ -220,18 +215,12 @@ def init_webapp(config, test=False):
     # Initialize Flask-SQLAlchemy
     db.app = app
     db.init_app(app)
+
     # NOTE: You don't want to use this if you're using alembic, since alembic
     # is now in charge of creating/upgrading/downgrading your database. If you
     # choose to not use alembic, you can add this line here.
     # db.create_all()
 
-    # Initialize Flask-Restless
-    manager = APIManager(
-        app,
-        flask_sqlalchemy_db=db,
-        preprocessors=dict(GET_MANY=[restless_api_auth_func]),
-    )
-    # manager.create_api(TableName methods=['GET', 'POST', 'OPTIONS'])
     return app
 
 

@@ -28,9 +28,7 @@ setup(
         'Flask-Bootstrap',
         'Flask-Cors',
         'Flask-REST-JSONAPI',
-        'Flask-Restless',
         'Flask-SQLALchemy',
-        'Flask-Script',
         'Flask-Security',
         'backoff',
         'configobj',
@@ -38,7 +36,6 @@ setup(
     ],
     entry_points = {
         'console_scripts': [
-            'flask-skeleton=flaskskeleton.controller:main',
             'flask-skeleton-worker=flaskskeleton.worker:main',
         ],
     }

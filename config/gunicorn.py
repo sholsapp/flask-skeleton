@@ -6,11 +6,7 @@ from flaskskeleton import init_webapp
 
 
 configobj_path = 'config/dev.config'
-
-configobj = ConfigObj(
-    configobj_path,
-    configspec=f'{configobj_path}spec',
-)
+configobj = ConfigObj(configobj_path, configspec=f"{configobj_path}spec")
 
 host = configobj['webapp']['host']
 port = configobj['webapp']['port']
@@ -36,8 +32,8 @@ capture_output = True
 
 def on_starting(server):
     server.log.setup(server.app.cfg)
-    server.app.configobj = configobj
+    server.app.configobj_path = configobj_path
 
 
 def post_fork(server, worker):
-    init_webapp(server.app.configobj)
+    init_webapp(server.app.configobj_path)

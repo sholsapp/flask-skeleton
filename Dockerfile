@@ -14,7 +14,7 @@ RUN apt-get --assume-yes install \
     python3-setuptools
 WORKDIR /build/flask-skeleton
 COPY requirements.txt /build/flask-skeleton
-COPY setup.py README.md /build/flask-skeleton/
+COPY setup.py VERSION README.md /build/flask-skeleton/
 COPY debian /build/flask-skeleton/debian
 COPY flaskskeleton /build/flask-skeleton/flaskskeleton
 COPY config /build/flask-skeleton/config

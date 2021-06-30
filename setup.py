@@ -1,16 +1,22 @@
 #!/usr/bin/env python
 
 from setuptools import setup, find_packages
-import os
+import pathlib
+
+
+VERSION = "0.0.0"
+with open(pathlib.Path("VERSION").resolve()) as fh:
+    VERSION = fh.read().strip()
 
 
 README = None
-with open(os.path.abspath('README.md')) as fh:
+with open(pathlib.Path('README.md').resolve()) as fh:
     README = fh.read()
+
 
 setup(
     name='flask-skeleton',
-    version='0.1.0',
+    version=VERSION,
     description=README,
     author='Stephen Holsapple',
     author_email='sholsapp@gmail.com',
@@ -36,12 +42,13 @@ setup(
     ],
     extras_require={
         'testing': [
+            'black',
             'flake8',
+            'isort',
+            'mypy',
             'pytest',
             'pytest-flask',
-            'black',
-            'mypy',
-            'isort',
+            'types-setuptools',
         ]
     },
     entry_points={

@@ -3,6 +3,7 @@ import os
 import sys
 
 import authlib
+import pkg_resources
 import sqlalchemy
 from authlib.integrations.flask_client import OAuth
 from configobj import ConfigObj
@@ -27,6 +28,12 @@ log = logging.getLogger(__name__)
 
 
 app = Flask(__name__)
+
+
+@app.cli.command()
+def version():
+    _version = pkg_resources.get_distribution("flask-skeleton").version
+    print(f"flask-skeleton v{_version}")
 
 
 def authlib_handle_authorize(remote, token, user_info):
@@ -290,5 +297,14 @@ def json_endpoint():
         {
             "username": current_user.email,
             "is_authenticated": current_user.is_authenticated,
+        }
+    )
+
+
+@app.route("/admin")
+def admin():
+    return jsonify(
+        {
+            "version": pkg_resources.get_distribution("flask-skeleton").version,
         }
     )

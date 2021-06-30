@@ -19,6 +19,18 @@ pip install -r requirements.txt
 python setup.py develop
 ```
 
+If you plan on testing, also install the extras.
+
+```
+pip install -r requirements-dev.txt
+```
+
+Or,
+
+```
+pip install -e ".[testing]"
+```
+
 ### Initialize the Database
 
 Initialize the development database using alembic.

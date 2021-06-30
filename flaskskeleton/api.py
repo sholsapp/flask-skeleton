@@ -7,10 +7,9 @@ should be used only when a custom, non-CRUD, API is necessary.
 
 from flask import Blueprint
 
+api = Blueprint("api", __name__, template_folder="templates")
 
-api = Blueprint('api', __name__, template_folder='templates')
 
-
-@api.route('/')
+@api.route("/")
 def status():
-    return 'GOOD'
+    return "GOOD"

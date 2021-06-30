@@ -18,7 +18,7 @@ setup(
     packages=find_packages(),
     zip_safe=False,
     include_package_data=True,
-     package_data={
+    package_data={
         # If any package contains *.txt or *.rst files, include them:
         "": ["*.html"],
     },
@@ -34,7 +34,17 @@ setup(
         'configobj',
         'gunicorn',
     ],
-    entry_points = {
+    extras_require={
+        'testing': [
+            'flake8',
+            'pytest',
+            'pytest-flask',
+            'black',
+            'mypy',
+            'isort',
+        ]
+    },
+    entry_points={
         'console_scripts': [
             'flask-skeleton-worker=flaskskeleton.worker:main',
         ],

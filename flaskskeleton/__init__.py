@@ -1,22 +1,26 @@
 import logging
 import os
-import datetime
+import sys
 
-from authlib.integrations.flask_client import OAuth
-from flask import Flask, render_template, jsonify, redirect, url_for, request, abort
-from flask_bootstrap import Bootstrap
-from flask_cors import CORS
-from flask_security import SQLAlchemyUserDatastore, Security, auth_token_required, current_user, login_required, login_user
-from flask_security.utils import encrypt_password
-from loginpass import create_flask_blueprint, Google
-from werkzeug.middleware.proxy_fix import ProxyFix
-from configobj import ConfigObj
 import authlib
 import sqlalchemy
+from authlib.integrations.flask_client import OAuth
+from configobj import ConfigObj
+from flask import Flask, abort, jsonify, redirect, render_template, url_for
+from flask_bootstrap import Bootstrap
+from flask_cors import CORS
+from flask_security import (
+    Security,
+    SQLAlchemyUserDatastore,
+    auth_token_required,
+    current_user,
+    login_required,
+)
+from loginpass import Google, create_flask_blueprint
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from flaskskeleton.api import api
-from flaskskeleton.model import make_conn_str, db, User, Role, OAuth2Token
-
+from flaskskeleton.model import OAuth2Token, Role, User, db
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -36,10 +40,10 @@ def authlib_handle_authorize(remote, token, user_info):
 
     """
 
-    log.info('Handling authorize for [%s] against [%s].', user_info.email, remote.name)
+    log.info("Handling authorize for [%s] against [%s].", user_info.email, remote.name)
 
     if not current_user.is_authenticated:
-        return redirect(url_for('security.login'))
+        return redirect(url_for("security.login"))
 
     user_id = current_user.id
 
@@ -61,10 +65,10 @@ def authlib_handle_authorize(remote, token, user_info):
     try:
         db.session.commit()
     except sqlalchemy.exc.IntegrityError:
-        log.error('Failed to commit new or updated token...')
+        log.error("Failed to commit new or updated token...")
         db.session.rollback()
 
-    return redirect(url_for('calendar'))
+    return redirect(url_for("calendar"))
 
 
 def authlib_fetch_token(name):
@@ -81,18 +85,19 @@ def authlib_fetch_token(name):
 
     """
 
-    log.info('Fetching token for [%s].', name)
+    log.info("Fetching token for [%s].", name)
 
     user_id = current_user.id
 
     item = OAuth2Token.query.filter_by(
-        name=name, user_id=user_id,
+        name=name,
+        user_id=user_id,
     ).first()
 
     if item:
         return item.to_token()
 
-    log.warning('Failed to fetch token for [%s].', name)
+    log.warning("Failed to fetch token for [%s].", name)
 
 
 def authlib_update_token(name, token):
@@ -107,11 +112,9 @@ def authlib_update_token(name, token):
 
     """
 
-    log.info('Updating token for [%s].', name)
+    log.info("Updating token for [%s].", name)
 
-    item = OAuth2Token.query.filter_by(
-        name=name, user_id=current_user.id
-    ).first()
+    item = OAuth2Token.query.filter_by(name=name, user_id=current_user.id).first()
 
     if not item:
         item = OAuth2Token(name=name, user_id=current_user.id)
@@ -123,7 +126,7 @@ def authlib_update_token(name, token):
     try:
         db.session.commit()
     except sqlalchemy.exc.IntegrityError:
-        log.error('Failed to commit updated token...')
+        log.error("Failed to commit updated token...")
         db.session.rollback()
 
     return item.to_token()
@@ -144,11 +147,12 @@ def init_webapp(config_path, test=False):
 
     """
 
-    try:
-        config = ConfigObj(config_path, configspec=f'{config_path}spec')
-    except OSError:
-        print(f"Failed to load the configuration file at {config_path}.")
-        sys.exit(1)
+    if not test:
+        try:
+            config = ConfigObj(config_path, configspec=f"{config_path}spec")
+        except OSError:
+            print(f"Failed to load the configuration file at {config_path}.")
+            sys.exit(1)
 
     # Make app work with proxies (like nginx) that set proxy headers.
     app.wsgi_app = ProxyFix(app.wsgi_app)
@@ -159,28 +163,28 @@ def init_webapp(config_path, test=False):
     # is where CRUD interfaces live, so be careful not to collide with model
     # names here. We could change this, but it's nice to have API live in the
     # same url namespace.
-    app.register_blueprint(api, url_prefix='/api')
+    app.register_blueprint(api, url_prefix="/api")
 
     # Initialize Flask configuration
     if test:
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://'
+        app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite://"
     else:
-        app.config['SQLALCHEMY_DATABASE_URI'] = config['webapp']['database_uri']
+        app.config["SQLALCHEMY_DATABASE_URI"] = config["webapp"]["database_uri"]
 
     # FIXME: Port these over to configobj.
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'abc123')
-    app.config['SECURITY_TOKEN_MAX_AGE'] = 60
-    app.config['SECURITY_TOKEN_AUTHENTICATION_HEADER'] = 'Auth-Token'
-    app.config['SECURITY_PASSWORD_HASH'] = 'bcrypt'
-    app.config['SECURITY_PASSWORD_SALT'] = os.environ.get('SALT', 'salt123')
-    app.config['SECURITY_REGISTERABLE'] = True
-    app.config['SECURITY_CONFIRMABLE'] = False
-    app.config['SECURITY_SEND_REGISTER_EMAIL'] = False
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "abc123")
+    app.config["SECURITY_TOKEN_MAX_AGE"] = 60
+    app.config["SECURITY_TOKEN_AUTHENTICATION_HEADER"] = "Auth-Token"
+    app.config["SECURITY_PASSWORD_HASH"] = "bcrypt"
+    app.config["SECURITY_PASSWORD_SALT"] = os.environ.get("SALT", "salt123")
+    app.config["SECURITY_REGISTERABLE"] = True
+    app.config["SECURITY_CONFIRMABLE"] = False
+    app.config["SECURITY_SEND_REGISTER_EMAIL"] = False
 
     # This thing is a supreme PIA with API, and because we're using token based
     # authentication.
-    app.config['WTF_CSRF_ENABLED'] = False
+    app.config["WTF_CSRF_ENABLED"] = False
 
     # Initialize Flask-CORS
     CORS(app, supports_credentials=True)
@@ -193,23 +197,25 @@ def init_webapp(config_path, test=False):
     user_datastore = SQLAlchemyUserDatastore(db, User, Role)
     Security(app, user_datastore)
 
-    app.config['GOOGLE_CLIENT_ID'] = os.environ.get('GOOGLE_CLIENT_ID', 'abc123')
-    app.config['GOOGLE_CLIENT_SECRET'] = os.environ.get('GOOGLE_CLIENT_SECRET', 'password')
-    app.config['GOOGLE_REFRESH_TOKEN_URL'] = 'https://www.googleapis.com/oauth2/v4/token'
-    app.config['GOOGLE_CLIENT_KWARGS'] = dict(
-        scope=' '.join([
-            'openid',
-            'https://www.googleapis.com/auth/userinfo.profile',
-            'https://www.googleapis.com/auth/calendar.readonly',
-        ])
+    app.config["GOOGLE_CLIENT_ID"] = os.environ.get("GOOGLE_CLIENT_ID", "abc123")
+    app.config["GOOGLE_CLIENT_SECRET"] = os.environ.get("GOOGLE_CLIENT_SECRET", "password")
+    app.config["GOOGLE_REFRESH_TOKEN_URL"] = "https://www.googleapis.com/oauth2/v4/token"
+    app.config["GOOGLE_CLIENT_KWARGS"] = dict(
+        scope=" ".join(
+            [
+                "openid",
+                "https://www.googleapis.com/auth/userinfo.profile",
+                "https://www.googleapis.com/auth/calendar.readonly",
+            ]
+        )
     )
-    app.config['GOOGLE_AUTHORIZE_PARAMS'] = {'access_type': 'offline'}
+    app.config["GOOGLE_AUTHORIZE_PARAMS"] = {"access_type": "offline"}
 
     # Initialize Authlib.
     oauth = OAuth()
     oauth.init_app(app, fetch_token=authlib_fetch_token, update_token=authlib_update_token)
     google_blueprint = create_flask_blueprint([Google], oauth, authlib_handle_authorize)
-    app.register_blueprint(google_blueprint, url_prefix='/google')
+    app.register_blueprint(google_blueprint, url_prefix="/google")
     # Save the oauth object in the app so handlers can use it to build clients.
     app.oauth = oauth
 
@@ -225,7 +231,7 @@ def init_webapp(config_path, test=False):
     return app
 
 
-@app.route('/calendar')
+@app.route("/calendar")
 @login_required
 def calendar():
     """A interesting integration.
@@ -242,36 +248,36 @@ def calendar():
     # Just ensure that the user has a token, otherwise redirect them to the
     # OAuth login/authorization flow.
     try:
-        OAuth2Token.query.filter_by(user_id=user_id, name='google').one()
+        OAuth2Token.query.filter_by(user_id=user_id, name="google").one()
     except sqlalchemy.orm.exc.NoResultFound:
-        return redirect(url_for('loginpass_google.login'))
+        return redirect(url_for("loginpass_google.login"))
 
     try:
         response = app.oauth.google.get(
-            'calendar/v3/calendars/primary/events',
-            params={'maxResults': 10, 'timeMin': '2017-01-01T12:00:00Z'},
+            "calendar/v3/calendars/primary/events",
+            params={"maxResults": 10, "timeMin": "2017-01-01T12:00:00Z"},
         )
         if response.ok:
-            return render_template('calendar.html', events=response.json()['items'])
+            return render_template("calendar.html", events=response.json()["items"])
     except authlib.oauth2.rfc6750.errors.InvalidTokenError:
-        log.error('Request made with invalid token...')
+        log.error("Request made with invalid token...")
         abort(500)
     except authlib.client.errors.MissingTokenError:
-        log.error('Request made without a token...')
+        log.error("Request made without a token...")
         abort(500)
 
 
-@app.route('/')
+@app.route("/")
 def index():
     """A landing page.
 
     Nothing too interesting here.
 
     """
-    return render_template('index.html', user=current_user)
+    return render_template("index.html", user=current_user)
 
 
-@app.route('/protected')
+@app.route("/protected")
 @auth_token_required
 def json_endpoint():
     """A protected API endpoint.
@@ -280,7 +286,9 @@ def json_endpoint():
     upstream.
 
     """
-    return jsonify({
-        'username': current_user.email,
-        'is_authenticated': current_user.is_authenticated,
-    })
+    return jsonify(
+        {
+            "username": current_user.email,
+            "is_authenticated": current_user.is_authenticated,
+        }
+    )

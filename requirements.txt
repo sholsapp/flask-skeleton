@@ -14,7 +14,7 @@ Flask-Security==3.0.0
 Flask-WTF==0.15.1
 Flask==2.0.1
 Jinja2==3.0.1
-Mako==1.1.4
+Mako==1.2.2
 MarkupSafe==2.0.1
 SQLAlchemy==1.4.20
 WTForms==2.3.3

@@ -31,7 +31,7 @@ cffi==1.14.5
 chardet==4.0.0
 click==8.0.1
 configobj==5.0.6
-cryptography==3.3.2
+cryptography==39.0.1
 dnspython==2.1.0
 dominate==2.6.0
 ecdsa==0.17.0

@@ -18,7 +18,7 @@ Mako==1.1.4
 MarkupSafe==2.0.1
 SQLAlchemy==1.4.20
 WTForms==2.3.3
-Werkzeug==2.0.1
+Werkzeug==2.2.3
 alembic==1.6.5
 appdirs==1.4.4
 attrs==21.2.0

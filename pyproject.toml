@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "flask-skeleton"
+version = "0.3.2"
+description = "A 'hello world' style Flask web server application that applies good practices."
+readme = "README.md"
+authors = [
+    { name = "Stephen Holsapple", email = "sholsapp@gmail.com" }
+]
+requires-python = ">=3.11"
+urls = { "Homepage" = "http://www.flask.com" }
+license = "MIT"
+
+dependencies = [
+    "Authlib",
+    "APScheduler",
+    "Flask",
+    "Flask-Bootstrap",
+    "Flask-Cors",
+    "Flask-REST-JSONAPI",
+    "Flask-SQLALchemy",
+    "Flask-Security",
+    "backoff",
+    "configobj",
+    "gunicorn",
+    "requests",
+]
+
+[dependency-groups]
+dev = [
+    "ruff",
+    "mypy",
+    "pytest",
+    "pytest-flask",
+    "alembic>=1.18.4",
+]
+
+[tool.mypy]
+ignore_missing_imports = true
+
+[tool.setuptools]
+packages = ["flaskskeleton"]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = [
+    "F", # flake8 error
+    "E", # pycodestyle error
+    "W", # pycodestyle warning
+    "I", # isort imports
+]

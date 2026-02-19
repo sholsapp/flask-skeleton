@@ -1,8 +1,7 @@
 
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
+from sqlalchemy import engine_from_config, pool
 
 from alembic import context
 
@@ -21,6 +20,7 @@ from flaskskeleton.model import *
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 from flaskskeleton.model import db
+
 target_metadata = db.metadata
 
 # other values from the config, defined by the needs of env.py,
@@ -29,6 +29,7 @@ target_metadata = db.metadata
 # ... etc.
 
 from configobj import ConfigObj
+
 configobj = ConfigObj('config/dev.config', configspec='config/dev.configspec')
 
 alembic_config = config.get_section(config.config_ini_section)

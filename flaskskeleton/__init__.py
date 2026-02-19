@@ -1,25 +1,22 @@
+import importlib
 import logging
 import os
 import sys
 import uuid
 
-import authlib
-import pkg_resources
 import sqlalchemy
-from authlib.integrations.flask_client import OAuth, token_update
+from authlib.integrations.flask_client import OAuth
 from configobj import ConfigObj
-from flask import Flask, abort, jsonify, redirect, render_template, url_for, current_app
+from flask import Flask, jsonify, redirect, render_template, url_for
 from flask_bootstrap import Bootstrap
 from flask_cors import CORS
 from flask_security import (
     Security,
     SQLAlchemyUserDatastore,
-    auth_token_required,
+    auth_required,
     current_user,
     login_user,
-    auth_required,
 )
-#from loginpass import Google, create_flask_blueprint
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from flaskskeleton.api import api
@@ -29,12 +26,15 @@ logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 
+__all__ = ["app", "init_webapp"]
+
+
 app = Flask(__name__)
 
 
 @app.cli.command()
 def version():
-    _version = pkg_resources.get_distribution("flask-skeleton").version
+    _version = importlib.metadata.version("flask-skeleton")
     print(f"flask-skeleton v{_version}")
 
 
@@ -168,19 +168,19 @@ def init_webapp(config_path, test=False):
 
     # Register Google directly
     app.google = oauth.register(
-	name='google',
-	client_id=app.config['GOOGLE_CLIENT_ID'],
-	client_secret=app.config['GOOGLE_CLIENT_SECRET'],
-	server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+        name='google',
+        client_id=app.config['GOOGLE_CLIENT_ID'],
+        client_secret=app.config['GOOGLE_CLIENT_SECRET'],
+        server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
         fetch_token=authlib_fetch_token,
         update_token=authlib_token_update,
-	client_kwargs={
-	    'scope': ' '.join([
-                'openid',
-                'https://www.googleapis.com/auth/userinfo.email',
-                'https://www.googleapis.com/auth/userinfo.profile',
-            ]),
-	},
+        client_kwargs={
+            'scope': ' '.join([
+                    'openid',
+                    'https://www.googleapis.com/auth/userinfo.email',
+                    'https://www.googleapis.com/auth/userinfo.profile',
+                ]),
+        },
         authorize_params={'access_type': 'offline', 'prompt': 'consent'} # for refresh_token
     )
 
@@ -253,37 +253,25 @@ def auth():
 
 @app.route("/")
 def index():
-    """A landing page.
-
-    Nothing too interesting here.
-
-    """
+    """A landing page."""
     return render_template("index.html", user=current_user)
 
 
-# FIXME: Flask-Security doesn't support real JWT, and so this example is a bit
-# misleading. Disable it for now until we support reql JWT.
-#
-#@app.route("/protected")
-#@auth_required('token', 'session')
-#def json_endpoint():
-#    """A protected API endpoint.
-#
-#    Demonstrates how to expose a JWT authentication protected API endpoint to a
-#    upstream.
-#
-#    """
-#    return jsonify(
-#        {
-#            "username": current_user.email,
-#            "is_authenticated": current_user.is_authenticated,
-#        }
-#    )
+@app.route("/protected")
+@auth_required('token', 'session')
+def json_endpoint():
+    """A protected API endpoint."""
+    return jsonify(
+        {
+            "username": current_user.email,
+            "is_authenticated": current_user.is_authenticated,
+        }
+    )
 
 @app.route("/health")
 def health():
     return jsonify(
         {
-            "version": pkg_resources.get_distribution("flask-skeleton").version,
+            "version": importlib.metadata.version("flask-skeleton"),
         }
     )

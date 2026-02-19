@@ -1,13 +1,13 @@
-"""initial database setup
+"""Initial database setup
 
 Revision ID: 2cd0b2246a0c
 Revises: 
 Create Date: 2019-05-17 17:40:00.652241
 
 """
-from alembic import op
 import sqlalchemy as sa
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = '2cd0b2246a0c'

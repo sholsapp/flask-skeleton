@@ -23,14 +23,12 @@ class Role(BaseModel, RoleMixin):
     description = db.Column(db.String(255))
 
 
-# XXX: Consider adjusting this model to follow the standard discussed in
-# http://openid.net/specs/openid-connect-core-1_0.html#StandardClaims. This is
-# also the standard that the Authlib/Loginpass libraries use.
 class User(BaseModel, UserMixin):
     __tablename__ = "user"
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(64), unique=True)
     password = db.Column(db.String(255))
+    fs_uniquifier = db.Column(db.String(255), unique=True, nullable=False)
     active = db.Column(db.Boolean())
     confirmed_at = db.Column(db.DateTime())
     roles = db.relationship("Role", secondary=roles_users, backref=db.backref("users", lazy="dynamic"))

@@ -1,13 +1,14 @@
 import logging
 import os
 import sys
+import uuid
 
 import authlib
 import pkg_resources
 import sqlalchemy
-from authlib.integrations.flask_client import OAuth
+from authlib.integrations.flask_client import OAuth, token_update
 from configobj import ConfigObj
-from flask import Flask, abort, jsonify, redirect, render_template, url_for
+from flask import Flask, abort, jsonify, redirect, render_template, url_for, current_app
 from flask_bootstrap import Bootstrap
 from flask_cors import CORS
 from flask_security import (
@@ -15,9 +16,10 @@ from flask_security import (
     SQLAlchemyUserDatastore,
     auth_token_required,
     current_user,
-    login_required,
+    login_user,
+    auth_required,
 )
-from loginpass import Google, create_flask_blueprint
+#from loginpass import Google, create_flask_blueprint
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from flaskskeleton.api import api
@@ -36,46 +38,29 @@ def version():
     print(f"flask-skeleton v{_version}")
 
 
-def authlib_handle_authorize(remote, token, user_info):
-    """Handle an OAuth2 authorization flow.
+def authlib_token_update(name, token, refresh_token=None, access_token=None):
 
-    This method is a OAuthlib construct, see documentation for more
-    information.
+    item = None
 
-    Handle an OAuth2 authorization flow by updating or creating a record for
-    the authorization in our database.
+    # Find the old token in the database
+    if refresh_token:
+        item = OAuth2Token.query.filter_by(name=name, refresh_token=refresh_token).first()
+    elif access_token:
+        item = OAuth2Token.query.filter_by(name=name, access_token=access_token).first()
+    else:
+        return
 
-    """
+    # Do an in-place update from the token.
+    item.from_token(token)
 
-    log.info("Handling authorize for [%s] against [%s].", user_info.email, remote.name)
-
-    if not current_user.is_authenticated:
-        return redirect(url_for("security.login"))
-
-    user_id = current_user.id
-
-    t = OAuth2Token.query.filter_by(
-        user_id=user_id,
-        name=remote.name,
-    ).first()
-    if not t:
-        t = OAuth2Token(
-            user_id=user_id,
-            name=remote.name,
-        )
-        current_user.tokens.append(t)
-
-    t.from_token(token)
-
-    db.session.add(t)
-
+    db.session.add(item)
     try:
         db.session.commit()
     except sqlalchemy.exc.IntegrityError:
-        log.error("Failed to commit new or updated token...")
+        log.error("Failed to commit updated token...")
         db.session.rollback()
 
-    return redirect(url_for("calendar"))
+    return item.to_token()
 
 
 def authlib_fetch_token(name):
@@ -101,42 +86,12 @@ def authlib_fetch_token(name):
         user_id=user_id,
     ).first()
 
+    print(item)
+
     if item:
         return item.to_token()
 
     log.warning("Failed to fetch token for [%s].", name)
-
-
-def authlib_update_token(name, token):
-    """Update a token.
-
-    This method is a OAuthlib construct, see documentation for more
-    information.
-
-    Update a token that has expired for the the remote.
-
-    :param str name: The name of the remote to update the token for.
-
-    """
-
-    log.info("Updating token for [%s].", name)
-
-    item = OAuth2Token.query.filter_by(name=name, user_id=current_user.id).first()
-
-    if not item:
-        item = OAuth2Token(name=name, user_id=current_user.id)
-
-    # Do an in-place update from the token.
-    item.from_token(token)
-
-    db.session.add(item)
-    try:
-        db.session.commit()
-    except sqlalchemy.exc.IntegrityError:
-        log.error("Failed to commit updated token...")
-        db.session.rollback()
-
-    return item.to_token()
 
 
 def init_webapp(config_path, test=False):
@@ -179,6 +134,8 @@ def init_webapp(config_path, test=False):
         app.config["SQLALCHEMY_DATABASE_URI"] = config["webapp"]["database_uri"]
 
     # FIXME: Port these over to configobj.
+    app.config["GOOGLE_CLIENT_ID"] = os.environ.get("GOOGLE_CLIENT_ID", "abc123")
+    app.config["GOOGLE_CLIENT_SECRET"] = os.environ.get("GOOGLE_CLIENT_SECRET", "password")
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "abc123")
     app.config["SECURITY_TOKEN_MAX_AGE"] = 60
@@ -201,30 +158,31 @@ def init_webapp(config_path, test=False):
     Bootstrap(app)
 
     # Initialize Flask-Security
-    user_datastore = SQLAlchemyUserDatastore(db, User, Role)
-    Security(app, user_datastore)
-
-    app.config["GOOGLE_CLIENT_ID"] = os.environ.get("GOOGLE_CLIENT_ID", "abc123")
-    app.config["GOOGLE_CLIENT_SECRET"] = os.environ.get("GOOGLE_CLIENT_SECRET", "password")
-    app.config["GOOGLE_REFRESH_TOKEN_URL"] = "https://www.googleapis.com/oauth2/v4/token"
-    app.config["GOOGLE_CLIENT_KWARGS"] = dict(
-        scope=" ".join(
-            [
-                "openid",
-                "https://www.googleapis.com/auth/userinfo.profile",
-                "https://www.googleapis.com/auth/calendar.readonly",
-            ]
-        )
-    )
-    app.config["GOOGLE_AUTHORIZE_PARAMS"] = {"access_type": "offline"}
+    app.user_datastore = SQLAlchemyUserDatastore(db, User, Role)
+    Security(app, app.user_datastore)
 
     # Initialize Authlib.
     oauth = OAuth()
-    oauth.init_app(app, fetch_token=authlib_fetch_token, update_token=authlib_update_token)
-    google_blueprint = create_flask_blueprint([Google], oauth, authlib_handle_authorize)
-    app.register_blueprint(google_blueprint, url_prefix="/google")
-    # Save the oauth object in the app so handlers can use it to build clients.
+    oauth.init_app(app)
     app.oauth = oauth
+
+    # Register Google directly
+    app.google = oauth.register(
+	name='google',
+	client_id=app.config['GOOGLE_CLIENT_ID'],
+	client_secret=app.config['GOOGLE_CLIENT_SECRET'],
+	server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+        fetch_token=authlib_fetch_token,
+        update_token=authlib_token_update,
+	client_kwargs={
+	    'scope': ' '.join([
+                'openid',
+                'https://www.googleapis.com/auth/userinfo.email',
+                'https://www.googleapis.com/auth/userinfo.profile',
+            ]),
+	},
+        authorize_params={'access_type': 'offline', 'prompt': 'consent'} # for refresh_token
+    )
 
     # Initialize Flask-SQLAlchemy
     db.app = app
@@ -233,45 +191,64 @@ def init_webapp(config_path, test=False):
     # NOTE: You don't want to use this if you're using alembic, since alembic
     # is now in charge of creating/upgrading/downgrading your database. If you
     # choose to not use alembic, you can add this line here.
-    # db.create_all()
+    #
+    # with app.app_context():
+    #   db.create_all()
 
     return app
 
 
-@app.route("/calendar")
-@login_required
-def calendar():
-    """A interesting integration.
+@app.route('/login/google')
+def google_login():
+    redirect_uri = url_for('auth', _external=True)
+    return app.google.authorize_redirect(redirect_uri)
 
-    Use an OAuth client to do somethign interesting.
 
-    Demonstrates how to use the OAuthlib client that we initiated earlier and
-    saved in the app object.
+@app.route('/auth')
+def auth():
+    # 1. Get the token from Google
+    token = app.google.authorize_access_token()
+    user_info = token.get('userinfo')
+    email = user_info['email']
 
-    """
 
-    user_id = current_user.id
-
-    # Just ensure that the user has a token, otherwise redirect them to the
-    # OAuth login/authorization flow.
-    try:
-        OAuth2Token.query.filter_by(user_id=user_id, name="google").one()
-    except sqlalchemy.orm.exc.NoResultFound:
-        return redirect(url_for("loginpass.login", name="google"))
-
-    try:
-        response = app.oauth.google.get(
-            "calendar/v3/calendars/primary/events",
-            params={"maxResults": 10, "timeMin": "2017-01-01T12:00:00Z"},
+    # 2. Check if user exists in the Flask-Security datastore
+    user = app.user_datastore.find_user(email=email)
+    # 3. If they don't exist, create an account for them
+    if not user:
+        # We generate a random uuid for fs_uniquifier as required by Flask-Security-Too
+        user = app.user_datastore.create_user(
+            email=email,
+            password=None, # OAuth users might not have local passwords
+            fs_uniquifier=uuid.uuid4().hex
         )
-        if response.ok:
-            return render_template("calendar.html", events=response.json()["items"])
-    except authlib.oauth2.rfc6750.errors.InvalidTokenError:
-        log.error("Request made with invalid token...")
-        abort(500)
-    except authlib.client.errors.MissingTokenError:
-        log.error("Request made without a token...")
-        abort(500)
+        db.session.commit()
+
+    t = OAuth2Token.query.filter_by(
+        user_id=user.id,
+        name='google',
+    ).first()
+    if not t:
+        t = OAuth2Token(
+            user_id=user.id,
+            name='google',
+        )
+        current_user.tokens.append(t)
+
+    t.from_token(token)
+
+    db.session.add(t)
+
+    try:
+        db.session.commit()
+    except sqlalchemy.exc.IntegrityError:
+        log.error("Failed to commit new or updated token...")
+        db.session.rollback()
+
+    # 4. Hand off to Flask-Security to establish the session
+    login_user(user)
+
+    return redirect(url_for('index'))
 
 
 @app.route("/")
@@ -284,25 +261,27 @@ def index():
     return render_template("index.html", user=current_user)
 
 
-@app.route("/protected")
-@auth_token_required
-def json_endpoint():
-    """A protected API endpoint.
+# FIXME: Flask-Security doesn't support real JWT, and so this example is a bit
+# misleading. Disable it for now until we support reql JWT.
+#
+#@app.route("/protected")
+#@auth_required('token', 'session')
+#def json_endpoint():
+#    """A protected API endpoint.
+#
+#    Demonstrates how to expose a JWT authentication protected API endpoint to a
+#    upstream.
+#
+#    """
+#    return jsonify(
+#        {
+#            "username": current_user.email,
+#            "is_authenticated": current_user.is_authenticated,
+#        }
+#    )
 
-    Demonstrates how to expose a JWT authentication protected API endpoint to a
-    upstream.
-
-    """
-    return jsonify(
-        {
-            "username": current_user.email,
-            "is_authenticated": current_user.is_authenticated,
-        }
-    )
-
-
-@app.route("/admin")
-def admin():
+@app.route("/health")
+def health():
     return jsonify(
         {
             "version": pkg_resources.get_distribution("flask-skeleton").version,

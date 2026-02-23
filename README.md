@@ -32,11 +32,11 @@ Use Docker to build and run the webapp locally.
 
 ```bash
 docker build -t sholsapp/flask-skeleton:0.1 .
-docker run --publish 5000:5000 --detach sholsapp/flask-skeleton:0.1
+docker run --publish 8080:8080 --detach sholsapp/flask-skeleton:0.1
 # You'll need to log in to the container and initialize the database using
 # alembic unless you're using a remote database.
 # $ alembic upgrade head
-curl http://0.0.0.0:5000/
+curl http://0.0.0.0:8080/
 ```
 
 # Packaging

@@ -3,4 +3,4 @@
 export DH_VIRTUALENV_INSTALL_ROOT=/opt
 
 %:
-	dh $@ --with python-virtualenv --builtin-venv --python /usr/bin/python3.6 --upgrade-pip
+	dh $@ --with python-virtualenv --builtin-venv --python /usr/bin/python3 --upgrade-pip

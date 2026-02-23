@@ -13,7 +13,7 @@ def app(request):
     config = {
         "webapp": {
             "host": "localhost",
-            "port": "5000",
+            "port": "8080",
             "database_uri": "sqlite://",
         }
     }

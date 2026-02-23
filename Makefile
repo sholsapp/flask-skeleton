@@ -7,7 +7,7 @@ deb:
 
 docker:
 	docker build -t sholsapp/flask-skeleton:0.1 .
-	docker run --cidfile .flask-skeleton-container-id --publish 5000:5000 --detach sholsapp/flask-skeleton:0.1
+	docker run --cidfile .flask-skeleton-container-id --publish 8080:8080 --detach sholsapp/flask-skeleton:0.1
 
 clean:
 	git clean -fxd -e infra

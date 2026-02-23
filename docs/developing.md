@@ -1,42 +1,24 @@
 # Development
 
-Before you get started you'll need to have Python 3.6+ installed. After, you'll
-need to also instal virtualenv. Research how to do this for whatever platform
-you run before continuing.
+Before you get started you'll need to have Python 3.11+ and `uv` installed.
 
 ### Setup a Virtual Environment
 
 Create a virtual environment the web application by running the following
 commands in a terminal.
 
-#### Python 3.6
+#### Initialize Virtual Environment
+
+Using Python 3.11+ and `uv`, create a virtual environment.
 
 ```bash
-python3 -m venv my-venv
-source my-venv/bin/activate
-pip install --upgrade pip
-pip install -r requirements.txt
-python setup.py develop
+uv sync
 ```
 
-If you plan on testing, also install the extras.
+If you plan on testing, also install the development dependencies.
 
 ```
-pip install -r requirements-dev.txt
-```
-
-Or,
-
-```
-pip install -e ".[testing]"
-```
-
-### Initialize the Database
-
-Initialize the development database using alembic.
-
-```
-alembic upgrade head
+uv sync --group dev
 ```
 
 ### Start the Web Server
@@ -51,8 +33,28 @@ Alternatively, start the gunicorn arbiter for a more production-like
 environment.
 
 ```bash
-gunicorn -c config/gunicorn.py -b 0.0.0.0:5000 flaskskeleton:app
+gunicorn -c config/gunicorn.py -b 0.0.0.0:8080 flaskskeleton:app
 ```
 
-Then, in your browser, navigate to
-[http://127.0.0.1:5000/](http://127.0.0.1:5000/).
+Then, in your browser, navigate to [http://127.0.0.1:8080/](http://127.0.0.1:8080/).
+
+### (Optional) Initialize the Database
+
+Initialize the development database using alembic.
+
+```bash
+alembic upgrade head
+```
+
+The database will be created automatically if running in `testing` mode.
+Otherwise, you'll need to create it yourself and point to it using the
+`SQLALCHEMY_DATABASE_URI` environment variable or configuration file.
+``
+### (Optional) Start the Worker
+
+Start the background worker process, which uses APScheduler to run
+scheduled jobs.
+
+```bash
+flask-skeleton-worker -c config/dev.config
+```

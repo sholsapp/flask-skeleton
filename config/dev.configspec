@@ -1,4 +1,9 @@
 [webapp]
   host=string(default=127.0.0.1)
-  port=string(default=5000)
-  database_uri=string(default="sqlite://database.db")
+  port=string(default=8080)
+  database_uri=string(default="sqlite:///database.db")
+
+[worker]
+  database_uri=string(default="sqlite:///database.db")
+  tick_interval=integer(default=3)
+

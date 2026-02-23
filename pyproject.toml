@@ -23,12 +23,16 @@ dependencies = [
     "Flask-REST-JSONAPI",
     "Flask-SQLALchemy",
     "Flask-Security",
-    "flask-admin[sqlalchemy]",
+    "Flask-Admin[sqlalchemy]",
     "backoff",
     "configobj",
     "gunicorn",
     "requests",
+    "gevent>=25.9.1",
 ]
+
+[project.scripts]
+flask-skeleton-worker = "flaskskeleton.worker:main"
 
 [dependency-groups]
 dev = [

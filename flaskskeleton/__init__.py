@@ -34,12 +34,35 @@ app = Flask(__name__)
 
 
 @app.cli.command()
-def version():
+def version() -> None:
+    """Print the current version of flask-skeleton.
+
+    :return: None
+
+    """
     _version = importlib.metadata.version("flask-skeleton")
-    print(f"flask-skeleton v{_version}")
+    print(f"flask-skeleton v{{_version}}")
 
 
-def authlib_token_update(name, token, refresh_token=None, access_token=None):
+def authlib_token_update(
+    name: str,
+    token: dict,
+    refresh_token: str = None,
+    access_token: str = None
+) -> dict | None:
+    """Update an OAuth2 token in the database.
+
+    This method is an Authlib construct, see Authlib documentation for more
+    information.
+
+    :param name: The name of the remote provider.
+    :param token: The new token data.
+    :param refresh_token: The refresh token to match.
+    :param access_token: The access token to match.
+    :return: The updated token as a dict, or None if not found.
+    :raises sqlalchemy.exc.IntegrityError: If database commit fails.
+
+    """
 
     item = None
 
@@ -66,17 +89,18 @@ def authlib_token_update(name, token, refresh_token=None, access_token=None):
     return item.to_token()
 
 
-def authlib_fetch_token(name):
+def authlib_fetch_token(name: str) -> dict | None:
     """Fetch a token from the database.
 
-    This method is a OAuthlib construct, see documentation for more
+    This method is an Authlib construct, see Authlib documentation for more
     information.
 
     Fetch a token from the database to refresh or initialize a new session for
-    the signed in user.
+    the signe-in user.
 
-    :param str name: The name of the remote to refresh or initialize the new
+    :param name: The name of the remote to refresh or initialize the new
         session for.
+    :return: The token as a dict, or None if not found.
 
     """
 
@@ -95,7 +119,7 @@ def authlib_fetch_token(name):
     log.warning("Failed to fetch token for [%s].", name)
 
 
-def init_webapp(config_path, test=False):
+def init_webapp(config_path: str, test: bool = False) -> Flask:
     """Initialize the web application.
 
     Initializes and configures the Flask web application. Call this method to
@@ -107,6 +131,8 @@ def init_webapp(config_path, test=False):
     :param config_path: The path to the ConfigObj configuration file.
     :param test: True if should initialize the webapp for testing (use
         in-memory database).
+    :return: The initialized Flask app instance.
+    :raises OSError: If the configuration file cannot be loaded.
 
     """
 
@@ -168,7 +194,7 @@ def init_webapp(config_path, test=False):
     oauth.init_app(app)
     app.oauth = oauth
 
-    # Register Google directly
+    # Register Google identity provider
     app.google = oauth.register(
         name="google",
         client_id=app.config["GOOGLE_CLIENT_ID"],
@@ -192,7 +218,7 @@ def init_webapp(config_path, test=False):
     )
 
     # Initialize Flask-Admin
-    admin = Admin(app, name="FlaskSkeleton Admin")
+    admin = Admin(app, name="Admin")
     admin.add_view(ModelView(User, db.session))
     admin.add_view(ModelView(Role, db.session))
 
@@ -201,22 +227,30 @@ def init_webapp(config_path, test=False):
 
 @app.route("/login/google")
 def google_login():
+    """
+    Redirect the user to Google OAuth login.
+
+    :return: A redirect response to Google OAuth.
+    """
     redirect_uri = url_for("auth", _external=True)
     return app.google.authorize_redirect(redirect_uri)
 
 
 @app.route("/auth")
 def auth():
-    # 1. Get the token from Google
-    token = app.google.authorize_access_token()
-    user_info = token.get("userinfo")
-    email = user_info["email"]
+    """
+    Handle Google OAuth callback, create user if needed, and log in.
 
-    # 2. Check if user exists in the Flask-Security datastore
+    :return: A redirect response to the index page.
+    :raises sqlalchemy.exc.IntegrityError: If database commit fails.
+    """
+    token = app.google.authorize_access_token()
+
+    user_info = token.get("userinfo")
+    email = user_info.get("email")
+
     user = app.user_datastore.find_user(email=email)
-    # 3. If they don't exist, create an account for them
     if not user:
-        # We generate a random uuid for fs_uniquifier as required by Flask-Security-Too
         user = app.user_datastore.create_user(
             email=email,
             password=None,  # OAuth users might not have local passwords
@@ -224,7 +258,6 @@ def auth():
         )
         db.session.commit()
 
-    # 4. Hand off to Flask-Security to establish the session
     login_user(user)
 
     t = OAuth2Token.query.filter_by(
@@ -252,14 +285,21 @@ def auth():
 
 @app.route("/")
 def index():
-    """A landing page."""
+    """
+    Render the landing page.
+
+    :return: Rendered HTML for the landing page.
+    """
     return render_template("index.html", user=current_user)
 
 
 @app.route("/protected")
 @auth_required("token", "session")
-def json_endpoint():
-    """A protected API endpoint."""
+def protected():
+    """Example protected endpoint.
+
+    :return: JSON response with user info.
+    """
     return jsonify(
         {
             "username": current_user.email,
@@ -268,8 +308,12 @@ def json_endpoint():
     )
 
 
-@app.route("/health")
-def health():
+@app.route("/healthz")
+def healthz():
+    """Return health and version info for the application.
+
+    :return: JSON response with version info.
+    """
     return jsonify(
         {
             "version": importlib.metadata.version("flask-skeleton"),

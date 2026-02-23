@@ -31,7 +31,9 @@ class User(BaseModel, UserMixin):
     fs_uniquifier = db.Column(db.String(255), unique=True, nullable=False)
     active = db.Column(db.Boolean())
     confirmed_at = db.Column(db.DateTime())
-    roles = db.relationship("Role", secondary=roles_users, backref=db.backref("users", lazy="dynamic"))
+    roles = db.relationship(
+        "Role", secondary=roles_users, backref=db.backref("users", lazy="dynamic")
+    )
     tokens = db.relationship("OAuth2Token", back_populates="user")
 
 
@@ -46,7 +48,15 @@ class OAuth2Token(BaseModel):
     #: ORM link to user table.
     user = db.relationship("User", back_populates="tokens")
 
-    def __init__(self, user_id, name, token_type=None, access_token=None, refresh_token=None, expires_at=None):
+    def __init__(
+        self,
+        user_id,
+        name,
+        token_type=None,
+        access_token=None,
+        refresh_token=None,
+        expires_at=None,
+    ):
         self.user_id = user_id
         self.name = name
         self.token_type = token_type

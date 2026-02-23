@@ -23,6 +23,7 @@ dependencies = [
     "Flask-REST-JSONAPI",
     "Flask-SQLALchemy",
     "Flask-Security",
+    "flask-admin[sqlalchemy]",
     "backoff",
     "configobj",
     "gunicorn",
@@ -36,6 +37,7 @@ dev = [
     "pytest",
     "pytest-flask",
     "alembic>=1.18.4",
+    "black>=26.1.0",
 ]
 
 [tool.mypy]

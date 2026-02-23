@@ -16,7 +16,9 @@ def main():
 
     scheduler.add_jobstore("sqlalchemy", url=url)
 
-    scheduler.add_job(tick, "interval", seconds=3, id="example_job", replace_existing=True)
+    scheduler.add_job(
+        tick, "interval", seconds=3, id="example_job", replace_existing=True
+    )
 
     # g is the greenlet that runs the scheduler loop.
     g = scheduler.start()

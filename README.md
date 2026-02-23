@@ -6,10 +6,9 @@ refactored, and specialized to suit your needs.
 
 - [APScheduler](https://apscheduler.readthedocs.io/en/latest/index.html)
 - [Authlib](https://docs.authlib.org/en/latest/index.html)
+- [Flask-Admin](https://github.com/pallets-eco/flask-admin)
 - [Flask-Bootstrap](http://pythonhosted.org/Flask-Bootstrap/)
-- [Flask-Restless](https://flask-restless.readthedocs.org/en/latest/)
 - [Flask-SQLAlchemy](https://pythonhosted.org/Flask-SQLAlchemy/)
-- [Flask-Script](http://flask-script.readthedocs.org/en/latest/)
 - [Flask-Security](https://pythonhosted.org/Flask-Security/)
 - [Flask](http://flask.pocoo.org/)
 - [Gunicorn](http://gunicorn.org/)

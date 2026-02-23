@@ -1,0 +1,12 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<p>Login:</p>
+
+<ul>
+    <li><a href="{{ url_for('google_login') }}">/login/google</a></li>
+    <li><a href="{{ url_for('okta_login') }}">/login/okta</a></li>
+</ul>
+
+{% endblock %}

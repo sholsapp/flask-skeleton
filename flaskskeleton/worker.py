@@ -36,7 +36,8 @@ def main():
 
     parser = argparse.ArgumentParser(description="flask-skeleton worker")
     parser.add_argument(
-        "-c", "--config",
+        "-c",
+        "--config",
         default=os.path.join(os.path.dirname(__file__), "..", "config", "dev.config"),
         help="Path to the ConfigObj configuration file.",
     )

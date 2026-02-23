@@ -7,7 +7,7 @@ import uuid
 import sqlalchemy
 from authlib.integrations.flask_client import OAuth
 from configobj import ConfigObj
-from flask import Flask, jsonify, redirect, render_template, url_for
+from flask import Flask, abort, jsonify, redirect, render_template, url_for
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
 from flask_bootstrap import Bootstrap
@@ -18,6 +18,7 @@ from flask_security import (
     auth_required,
     current_user,
     login_user,
+    logout_user,
 )
 from werkzeug.middleware.proxy_fix import ProxyFix
 
@@ -41,14 +42,11 @@ def version() -> None:
 
     """
     _version = importlib.metadata.version("flask-skeleton")
-    print(f"flask-skeleton v{{_version}}")
+    print("flask-skeleton v{_version}")
 
 
 def authlib_token_update(
-    name: str,
-    token: dict,
-    refresh_token: str = None,
-    access_token: str = None
+    name: str, token: dict, refresh_token: str = None, access_token: str = None
 ) -> dict | None:
     """Update an OAuth2 token in the database.
 
@@ -157,6 +155,11 @@ def init_webapp(config_path: str, test: bool = False) -> Flask:
     app.config["GOOGLE_CLIENT_SECRET"] = os.environ.get(
         "GOOGLE_CLIENT_SECRET", "password"
     )
+    app.config["OKTA_CLIENT_ID"] = os.environ.get("OKTA_CLIENT_ID", "abc123")
+    app.config["OKTA_CLIENT_SECRET"] = os.environ.get("OKTA_CLIENT_SECRET", "password")
+    app.config["OKTA_BASE_URL"] = os.environ.get(
+        "OKTA_BASE_URL", "https://your-okta-domain.okta.com"
+    )
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "abc123")
     app.config["SECURITY_TOKEN_MAX_AGE"] = 60
@@ -166,6 +169,8 @@ def init_webapp(config_path: str, test: bool = False) -> Flask:
     app.config["SECURITY_REGISTERABLE"] = True
     app.config["SECURITY_CONFIRMABLE"] = False
     app.config["SECURITY_SEND_REGISTER_EMAIL"] = False
+    app.config["SECURITY_LOGIN_URL"] = "/login"
+    app.config["SECURITY_LOGOUT_URL"] = "/logout"
     app.config["WTF_CSRF_ENABLED"] = False  # Doesn't play nice with token-based auth
 
     # Initialize Flask-SQLAlchemy
@@ -217,6 +222,29 @@ def init_webapp(config_path: str, test: bool = False) -> Flask:
         },  # for refresh_token
     )
 
+    # Register Okta identity provider
+    app.okta = oauth.register(
+        name="okta",
+        client_id=app.config["OKTA_CLIENT_ID"],
+        client_secret=app.config["OKTA_CLIENT_SECRET"],
+        server_metadata_url=f"{app.config['OKTA_BASE_URL']}/.well-known/openid-configuration",
+        fetch_token=authlib_fetch_token,
+        update_token=authlib_token_update,
+        client_kwargs={
+            "scope": " ".join(
+                [
+                    "openid",
+                    "email",
+                    "profile",
+                    "offline_access",
+                ]
+            ),
+        },  # for refresh_token
+    )
+
+    # Supported OAuth providers for the unified /auth route
+    app.supported_providers = {"google", "okta"}
+
     # Initialize Flask-Admin
     admin = Admin(app, name="Admin")
     admin.add_view(ModelView(User, db.session))
@@ -225,26 +253,55 @@ def init_webapp(config_path: str, test: bool = False) -> Flask:
     return app
 
 
-@app.route("/login/google")
+@app.route("/_auth/login/google")
 def google_login():
     """
     Redirect the user to Google OAuth login.
 
     :return: A redirect response to Google OAuth.
     """
-    redirect_uri = url_for("auth", _external=True)
+    redirect_uri = url_for(
+        "auth_oidc_callback",
+        provider="google",
+        _external=True,
+    )
     return app.google.authorize_redirect(redirect_uri)
 
 
-@app.route("/auth")
-def auth():
+@app.route("/_auth/login/okta")
+def okta_login():
     """
-    Handle Google OAuth callback, create user if needed, and log in.
+    Redirect the user to Okta OAuth login.
 
+    :return: A redirect response to Okta OAuth.
+    """
+    redirect_uri = url_for(
+        "auth_oidc_callback",
+        provider="okta",
+        _external=True,
+    )
+    return app.okta.authorize_redirect(redirect_uri)
+
+
+@app.route("/_auth/oidc/callback/<provider>")
+def auth_oidc_callback(provider):
+    """
+    Handle OAuth callback for any supported provider, create user if needed,
+    and log in.
+
+    The provider is determined by the ``provider`` route parameter, which must
+    be one of the supported providers (e.g. ``google``, ``okta``).
+
+    :param provider: The name of the OAuth provider.
     :return: A redirect response to the index page.
+    :raises werkzeug.exceptions.BadRequest: If the provider is unsupported.
     :raises sqlalchemy.exc.IntegrityError: If database commit fails.
     """
-    token = app.google.authorize_access_token()
+    if provider not in app.supported_providers:
+        abort(400, description=f"Unsupported provider: {provider}")
+
+    oauth_client = getattr(app.oauth, provider)
+    token = oauth_client.authorize_access_token()
 
     user_info = token.get("userinfo")
     email = user_info.get("email")
@@ -262,12 +319,12 @@ def auth():
 
     t = OAuth2Token.query.filter_by(
         user_id=user.id,
-        name="google",
+        name=provider,
     ).first()
     if not t:
         t = OAuth2Token(
             user_id=user.id,
-            name="google",
+            name=provider,
         )
         current_user.tokens.append(t)
 
@@ -279,6 +336,38 @@ def auth():
     except sqlalchemy.exc.IntegrityError:
         log.error("Failed to commit new or updated token...")
         db.session.rollback()
+
+    return redirect(url_for("index"))
+
+
+@app.route("/login")
+def login():
+    """
+    Render the login page.
+
+    :return: Rendered HTML for the login page.
+    """
+    return render_template("login.html")
+
+
+@app.route("/logout")
+def logout():
+    """Log out the current user and destroy any associated OAuth2 tokens.
+
+    Deletes all OAuth2 tokens for the current user from the database, then
+    logs the user out and redirects to the index page.
+
+    :return: A redirect response to the index page.
+    """
+    if current_user.is_authenticated:
+        OAuth2Token.query.filter_by(user_id=current_user.id).delete()
+        try:
+            db.session.commit()
+        except sqlalchemy.exc.IntegrityError:
+            log.error("Failed to delete tokens for user [%s].", current_user.email)
+            db.session.rollback()
+
+        logout_user()
 
     return redirect(url_for("index"))
 
@@ -304,18 +393,5 @@ def protected():
         {
             "username": current_user.email,
             "is_authenticated": current_user.is_authenticated,
-        }
-    )
-
-
-@app.route("/healthz")
-def healthz():
-    """Return health and version info for the application.
-
-    :return: JSON response with version info.
-    """
-    return jsonify(
-        {
-            "version": importlib.metadata.version("flask-skeleton"),
         }
     )

@@ -5,7 +5,7 @@
 	{% if user.email %}
 	Hello, {{ user.email }}
 	{% else %}
-	Hello, anon
+	Who are you?
 	{%endif %}
 </h1>
 
@@ -13,9 +13,12 @@
 
 <ul>
     <li><a href="{{ url_for('index') }}">/</a></li>
+    <li><a href="{{ url_for('protected') }}">/protected</a></li>
+    <li><a href="{{ url_for('admin.index') }}">/admin</a></li>
     <li><a href="{{ url_for('security.login') }}">/login</a></li>
     <li><a href="{{ url_for('security.logout') }}">/logout</a></li>
     <li><a href="{{ url_for('google_login') }}">/login/google</a></li>
+    <li><a href="{{ url_for('okta_login') }}">/login/okta</a></li>
 </ul>
 
 {% endblock %}

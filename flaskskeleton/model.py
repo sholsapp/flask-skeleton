@@ -67,7 +67,7 @@ class OAuth2Token(BaseModel):
     def from_token(self, token):
         self.token_type = token["token_type"]
         self.access_token = token["access_token"]
-        self.refresh_token = token["refresh_token"]
+        self.refresh_token = token.get("refresh_token")
         self.expires_at = token["expires_at"]
 
     def to_token(self):

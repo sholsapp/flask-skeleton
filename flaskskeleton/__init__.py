@@ -7,8 +7,8 @@ import uuid
 import sqlalchemy
 from authlib.integrations.flask_client import OAuth
 from configobj import ConfigObj
-from flask import Flask, abort, jsonify, redirect, render_template, url_for
-from flask_admin import Admin
+from flask import Flask, Response, abort, jsonify, redirect, render_template, url_for
+from flask_admin import Admin, AdminIndexView, expose
 from flask_admin.contrib.sqla import ModelView
 from flask_bootstrap import Bootstrap
 from flask_cors import CORS
@@ -42,7 +42,7 @@ def version() -> None:
 
     """
     _version = importlib.metadata.version("flask-skeleton")
-    print("flask-skeleton v{_version}")
+    print(f"flask-skeleton v{_version}")
 
 
 def authlib_token_update(
@@ -117,6 +117,48 @@ def authlib_fetch_token(name: str) -> dict | None:
     log.warning("Failed to fetch token for [%s].", name)
 
 
+class SecureModelView(ModelView):
+    """A Flask-Admin ModelView that requires authentication.
+
+    Only authenticated users (via token or session) can access admin model
+    views. Unauthenticated users are redirected to the login page.
+    """
+
+    def is_accessible(self) -> bool:
+        """Check if the current user is authenticated.
+
+        :return: True if the user is authenticated, False otherwise.
+        """
+        return current_user.is_active and current_user.is_authenticated
+
+    def inaccessible_callback(self, name: str, **kwargs) -> Response:
+        """Redirect unauthenticated users to the login page.
+
+        :param name: The name of the view being accessed.
+        :return: A redirect response to the login page.
+        """
+        return redirect(url_for("login", next=url_for(name, **kwargs)))
+
+
+class SecureAdminIndexView(AdminIndexView):
+    """A Flask-Admin index view that requires authentication.
+
+    Only authenticated users can access the admin index page.
+    Unauthenticated users are redirected to the login page.
+    """
+
+    @expose("/")
+    def index(self) -> str:
+        """Render the admin index page if authenticated.
+
+        :return: Rendered HTML for the admin index page, or a redirect
+            to the login page.
+        """
+        if not current_user.is_active or not current_user.is_authenticated:
+            return redirect(url_for("login", next=url_for("admin.index")))
+        return super().index()
+
+
 def init_webapp(config_path: str, test: bool = False) -> Flask:
     """Initialize the web application.
 
@@ -174,7 +216,6 @@ def init_webapp(config_path: str, test: bool = False) -> Flask:
     app.config["WTF_CSRF_ENABLED"] = False  # Doesn't play nice with token-based auth
 
     # Initialize Flask-SQLAlchemy
-    db.app = app
     db.init_app(app)
 
     # Only create the database during testing. In production, use alembic to
@@ -184,7 +225,6 @@ def init_webapp(config_path: str, test: bool = False) -> Flask:
             db.create_all()
 
     # Initialize Flask-CORS
-    CORS(app, supports_credentials=True)
     CORS(app, supports_credentials=True, resources={r"/*": {"origins": "*"}})
 
     # Initialize Flask-Bootstrap
@@ -245,10 +285,10 @@ def init_webapp(config_path: str, test: bool = False) -> Flask:
     # Supported OAuth providers for the unified /auth route
     app.supported_providers = {"google", "okta"}
 
-    # Initialize Flask-Admin
-    admin = Admin(app, name="Admin")
-    admin.add_view(ModelView(User, db.session))
-    admin.add_view(ModelView(Role, db.session))
+    # Initialize Flask-Admin with authentication-required views
+    admin = Admin(app, name="Admin", index_view=SecureAdminIndexView())
+    admin.add_view(SecureModelView(User, db.session))
+    admin.add_view(SecureModelView(Role, db.session))
 
     return app
 
@@ -312,6 +352,7 @@ def auth_oidc_callback(provider):
             email=email,
             password=None,  # OAuth users might not have local passwords
             fs_uniquifier=uuid.uuid4().hex,
+            active=True,
         )
         db.session.commit()
 

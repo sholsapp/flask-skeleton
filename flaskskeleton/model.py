@@ -79,6 +79,24 @@ class OAuth2Token(BaseModel):
         )
 
 
+class Pokemon(BaseModel):
+    __tablename__ = "pokemon"
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    number = db.Column(db.Integer, nullable=False)
+    name = db.Column(db.String(255), nullable=False)
+    type_1 = db.Column(db.String(50), nullable=False)
+    type_2 = db.Column(db.String(50), nullable=True)
+    total = db.Column(db.Integer, nullable=False)
+    hp = db.Column(db.Integer, nullable=False)
+    attack = db.Column(db.Integer, nullable=False)
+    defense = db.Column(db.Integer, nullable=False)
+    sp_atk = db.Column(db.Integer, nullable=False)
+    sp_def = db.Column(db.Integer, nullable=False)
+    speed = db.Column(db.Integer, nullable=False)
+    generation = db.Column(db.Integer, nullable=False)
+    legendary = db.Column(db.Boolean(), nullable=False, default=False)
+
+
 def make_conn_str():
     """Make an local database file on disk."""
     return "sqlite:///{cwd}/database.db".format(cwd=os.path.abspath(os.getcwd()))

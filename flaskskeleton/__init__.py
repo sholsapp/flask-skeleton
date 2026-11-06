@@ -22,7 +22,7 @@ from flask_security import (
 )
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-from flaskskeleton.model import OAuth2Token, Role, User, db
+from flaskskeleton.model import OAuth2Token, Pokemon, Role, User, db
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -289,6 +289,7 @@ def init_webapp(config_path: str, test: bool = False) -> Flask:
     admin = Admin(app, name="Admin", index_view=SecureAdminIndexView())
     admin.add_view(SecureModelView(User, db.session))
     admin.add_view(SecureModelView(Role, db.session))
+    admin.add_view(SecureModelView(Pokemon, db.session))
 
     return app
 
